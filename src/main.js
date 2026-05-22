@@ -319,7 +319,7 @@ function setupDice() {
 
   const spacing = rect.width / 6;
   const centerY = rect.height / 2;
-  const dynamicDiceSize = Math.min(75, rect.width / 6.5);
+  const dynamicDiceSize = Math.min(75, rect.width / 6.5, rect.height * 0.7);
 
   for (let i = 0; i < 5; i++) {
     const x = spacing * (i + 1);
@@ -354,7 +354,7 @@ function onResize() {
 
   const spacing = rect.width / 6;
   const centerY = rect.height / 2;
-  const dynamicDiceSize = Math.min(75, rect.width / 6.5);
+  const dynamicDiceSize = Math.min(75, rect.width / 6.5, rect.height * 0.7);
 
   diceComponents.forEach((die, i) => {
     die.x = spacing * (i + 1);

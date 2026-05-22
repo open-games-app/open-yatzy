@@ -24,7 +24,10 @@ class YatzyGame extends FlameGame with HasTapCallbacks {
     super.onLoad();
 
     // Size of individual dice on canvas (e.g. 70x70)
-    final double dieSize = size.x > 500 ? 80.0 : 65.0;
+    double dieSize = size.x > 500 ? 80.0 : 65.0;
+    if (dieSize > size.y * 0.75) {
+      dieSize = size.y * 0.75;
+    }
     final Vector2 diceSizeVector = Vector2(dieSize, dieSize);
 
     // Initial spacing calculations
@@ -124,7 +127,10 @@ class YatzyGame extends FlameGame with HasTapCallbacks {
     super.onGameResize(canvasSize);
 
     if (_diceComponents.length == 5) {
-      final double dieSize = canvasSize.x > 500 ? 80.0 : 65.0;
+      double dieSize = canvasSize.x > 500 ? 80.0 : 65.0;
+      if (dieSize > canvasSize.y * 0.75) {
+        dieSize = canvasSize.y * 0.75;
+      }
       final Vector2 diceSizeVector = Vector2(dieSize, dieSize);
 
       final double spacing = canvasSize.x / 6;

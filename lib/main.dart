@@ -58,6 +58,13 @@ class _GameScreenState extends State<GameScreen> {
   bool _isRolling = false;
   bool _hasSavedGame = false;
 
+  // Sizing and responsive tokens computed dynamically
+  double _cellHeight = 34.0;
+  double _diceArenaHeight = 125.0;
+  double _verticalSpacing = 10.0;
+  double _cardPadding = 16.0;
+  double _textSizeMultiplier = 1.0;
+
   @override
   void initState() {
     super.initState();
@@ -595,6 +602,29 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+    if (screenHeight < 680) {
+      _cellHeight = 22.0;
+      _diceArenaHeight = 85.0;
+      _verticalSpacing = 4.0;
+      _cardPadding = 8.0;
+      _textSizeMultiplier = 0.75;
+    } else if (screenHeight < 800) {
+      _cellHeight = 28.0;
+      _diceArenaHeight = 100.0;
+      _verticalSpacing = 8.0;
+      _cardPadding = 12.0;
+      _textSizeMultiplier = 0.88;
+    } else {
+      _cellHeight = 34.0;
+      _diceArenaHeight = 125.0;
+      _verticalSpacing = 12.0;
+      _cardPadding = 16.0;
+      _textSizeMultiplier = 1.0;
+    }
+
+    final double scoreTabTop = screenHeight < 680 ? 110.0 : (screenHeight < 800 ? 145.0 : 180.0);
+
     if (!_isGameStarted) {
       return _buildSetupScreen();
     }
@@ -603,73 +633,71 @@ class _GameScreenState extends State<GameScreen> {
       endDrawer: _buildLeaderboardDrawer(),
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedRotation(
-                    turns: _engine.activePlayerIndex == 1 ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.easeInOutCubic,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Main Card
-                        Container(
-                          constraints: const BoxConstraints(maxWidth: 480),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF323846),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: const Color(0xFF1F2430), width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.35),
-                                blurRadius: 30,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Header
-                              _buildCustomHeader(),
-                              const SizedBox(height: 10),
-                              // Turn strip
-                              _buildTurnStrip(),
-                              const SizedBox(height: 10),
-                              // Scorecard (On TOP)
-                              _buildScorecardTable(),
-                              const SizedBox(height: 14),
-                              // Dice component (Flame canvas on BOTTOM)
-                              _buildDiceArena(),
-                              const SizedBox(height: 14),
-                              // Controls
-                              _buildControlBar(),
-                            ],
-                          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedRotation(
+                  turns: _engine.activePlayerIndex == 1 ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOutCubic,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Main Card
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF323846),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color(0xFF1F2430), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.35),
+                              blurRadius: 30,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                        // Left score tab
-                        Positioned(
-                          left: -28,
-                          top: 180,
-                          child: _buildLeftScoreTab(),
+                        padding: EdgeInsets.all(_cardPadding),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Header
+                            _buildCustomHeader(),
+                            SizedBox(height: _verticalSpacing),
+                            // Turn strip
+                            _buildTurnStrip(),
+                            SizedBox(height: _verticalSpacing),
+                            // Scorecard (On TOP)
+                            _buildScorecardTable(),
+                            SizedBox(height: _verticalSpacing * 1.2),
+                            // Dice component (Flame canvas on BOTTOM)
+                            _buildDiceArena(),
+                            SizedBox(height: _verticalSpacing * 1.2),
+                            // Controls
+                            _buildControlBar(),
+                          ],
                         ),
-                        // Right exit tab
-                        Positioned(
-                          right: -28,
-                          top: 180,
-                          child: _buildRightExitTab(),
-                        ),
-                      ],
-                    ),
+                      ),
+                      // Left score tab
+                      Positioned(
+                        left: -28,
+                        top: scoreTabTop,
+                        child: _buildLeftScoreTab(),
+                      ),
+                      // Right exit tab
+                      Positioned(
+                        right: -28,
+                        top: scoreTabTop,
+                        child: _buildRightExitTab(),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -678,12 +706,19 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildSetupScreen() {
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double logoSize = screenHeight < 680 ? 60.0 : (screenHeight < 800 ? 85.0 : 110.0);
+    final double titleFontSize = screenHeight < 680 ? 24.0 : (screenHeight < 800 ? 30.0 : 36.0);
+    final double setupPadding = screenHeight < 680 ? 12.0 : (screenHeight < 800 ? 18.0 : 24.0);
+    final double verticalSpacing = screenHeight < 680 ? 10.0 : (screenHeight < 800 ? 16.0 : 20.0);
+    final bool showFullSubtitles = screenHeight >= 680;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: screenHeight < 680 ? 8.0 : 16.0),
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 400),
                 decoration: BoxDecoration(
@@ -698,7 +733,7 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(setupPadding),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -708,7 +743,7 @@ class _GameScreenState extends State<GameScreen> {
                       children: [
                         Center(
                           child: Container(
-                            margin: const EdgeInsets.only(bottom: 16),
+                            margin: EdgeInsets.only(bottom: verticalSpacing),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
@@ -723,40 +758,42 @@ class _GameScreenState extends State<GameScreen> {
                               borderRadius: BorderRadius.circular(24),
                               child: Image.asset(
                                 'assets/images/logo.png',
-                                height: 110,
-                                width: 110,
+                                height: logoSize,
+                                width: logoSize,
                                 fit: BoxFit.cover,
                               ),
                             ),
                           ),
                         ),
-                        const Text(
+                        Text(
                           'YATZY!',
                           style: TextStyle(
-                            fontSize: 36,
+                            fontSize: titleFontSize,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 4,
-                            color: Color(0xFFFBBC05),
+                            color: const Color(0xFFFBBC05),
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: verticalSpacing * 0.3),
                         const Text(
                           'Play Local Multiplayer Without Ads',
-                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'open-games.app is the parent name who builds open-source games without ads. Play Now Free!',
-                          style: TextStyle(color: Color(0xFFA0A5B5), fontSize: 11),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
+                        if (showFullSubtitles) ...[
+                          const SizedBox(height: 4),
+                          const Text(
+                            'open-games.app is the parent name who builds open-source games without ads. Play Now Free!',
+                            style: TextStyle(color: Color(0xFFA0A5B5), fontSize: 11),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        SizedBox(height: verticalSpacing),
                         
                         if (_hasSavedGame) ...[
                           Container(
-                            margin: const EdgeInsets.only(bottom: 20),
+                            margin: EdgeInsets.only(bottom: verticalSpacing),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: const Color(0xFF202430),
@@ -765,14 +802,14 @@ class _GameScreenState extends State<GameScreen> {
                             ),
                             child: Column(
                               children: [
-                                const Row(
+                                Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.history_edu, color: Color(0xFFFBBC05), size: 18),
-                                    SizedBox(width: 8),
+                                    const Icon(Icons.history_edu, color: Color(0xFFFBBC05), size: 18),
+                                    const SizedBox(width: 8),
                                     Text(
                                       'Unfinished Match Detected',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFFBBC05)),
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenHeight < 680 ? 11 : 13, color: const Color(0xFFFBBC05)),
                                     ),
                                   ],
                                 ),
@@ -842,7 +879,7 @@ class _GameScreenState extends State<GameScreen> {
 
                         // Player Names Card
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(setupPadding * 0.7),
                           decoration: BoxDecoration(
                             color: const Color(0xFF202430),
                             borderRadius: BorderRadius.circular(16),
@@ -851,20 +888,21 @@ class _GameScreenState extends State<GameScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'PLAYER NAMES',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFFBBC05)),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenHeight < 680 ? 12 : 14, color: const Color(0xFFFBBC05)),
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: verticalSpacing * 0.6),
                               ...List.generate(2, (index) {
                                 return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  padding: EdgeInsets.only(bottom: verticalSpacing * 0.4),
                                   child: TextField(
                                     controller: _nameControllers[index],
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                                    style: TextStyle(color: Colors.white, fontSize: screenHeight < 680 ? 12.0 : 14.0),
                                     decoration: InputDecoration(
                                       labelText: 'Player ${index + 1} Name',
-                                      labelStyle: const TextStyle(color: Color(0xFFA0A5B5), fontSize: 12),
+                                      labelStyle: TextStyle(color: const Color(0xFFA0A5B5), fontSize: screenHeight < 680 ? 10.0 : 12.0),
+                                      contentPadding: screenHeight < 680 ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8) : null,
                                       filled: true,
                                       fillColor: const Color(0xFF323846),
                                       border: OutlineInputBorder(
@@ -882,15 +920,15 @@ class _GameScreenState extends State<GameScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: verticalSpacing),
 
                         // Start Match Button
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFBBC05),
                             foregroundColor: const Color(0xFF323846),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            padding: EdgeInsets.symmetric(vertical: screenHeight < 680 ? 10 : 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenHeight < 680 ? 12 : 16)),
                             elevation: 4,
                           ),
                           onPressed: () {
@@ -907,9 +945,9 @@ class _GameScreenState extends State<GameScreen> {
                               _isRolling = false;
                             });
                           },
-                          child: const Text(
+                          child: Text(
                             'START MATCH',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                            style: TextStyle(fontSize: screenHeight < 680 ? 13 : 15, fontWeight: FontWeight.bold, letterSpacing: 1.5),
                           ),
                         ),
                       ],
@@ -933,10 +971,21 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildCustomHeader() {
+    final double iconSize = _cellHeight < 28 ? 18.0 : 24.0;
+    final double buttonSize = _cellHeight < 28 ? 32.0 : 48.0;
+    final BoxConstraints constraints = BoxConstraints(
+      minWidth: buttonSize,
+      minHeight: buttonSize,
+      maxWidth: buttonSize,
+      maxHeight: buttonSize,
+    );
+
     return Row(
       children: [
         IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.grey),
+          constraints: constraints,
+          padding: EdgeInsets.zero,
+          icon: Icon(Icons.arrow_back, color: Colors.grey, size: iconSize),
           onPressed: () {
             setState(() {
               _isGameStarted = false;
@@ -947,33 +996,39 @@ class _GameScreenState extends State<GameScreen> {
           borderRadius: BorderRadius.circular(6),
           child: Image.asset(
             'assets/images/logo.png',
-            height: 28,
-            width: 28,
+            height: _cellHeight < 28 ? 20.0 : 28.0,
+            width: _cellHeight < 28 ? 20.0 : 28.0,
             fit: BoxFit.cover,
           ),
         ),
-        const SizedBox(width: 8),
-        const Text(
+        SizedBox(width: _cellHeight < 28 ? 4.0 : 8.0),
+        Text(
           'YATZY!',
           style: TextStyle(
-            letterSpacing: 2,
+            letterSpacing: _cellHeight < 28 ? 1 : 2,
             fontWeight: FontWeight.w900,
-            color: Color(0xFFFBBC05),
-            fontSize: 18,
+            color: const Color(0xFFFBBC05),
+            fontSize: _cellHeight < 28 ? 14.0 : 18.0,
           ),
         ),
         const Spacer(),
         IconButton(
-          icon: const Icon(Icons.help_outline, color: Color(0xFFFBBC05)),
+          constraints: constraints,
+          padding: EdgeInsets.zero,
+          icon: Icon(Icons.help_outline, color: const Color(0xFFFBBC05), size: iconSize),
           onPressed: _showRulesDialog,
         ),
         IconButton(
-          icon: const Icon(Icons.refresh, color: Colors.grey),
+          constraints: constraints,
+          padding: EdgeInsets.zero,
+          icon: Icon(Icons.refresh, color: Colors.grey, size: iconSize),
           onPressed: _resetGame,
         ),
         if (_social.currentUser == null)
           IconButton(
-            icon: const Icon(Icons.login, color: Color(0xFFFBBC05)),
+            constraints: constraints,
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.login, color: const Color(0xFFFBBC05), size: iconSize),
             onPressed: _loginSocial,
           )
         else
@@ -982,12 +1037,18 @@ class _GameScreenState extends State<GameScreen> {
             child: Center(
               child: Text(
                 _social.currentUser!.displayName.split(' ')[0],
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: _cellHeight < 28 ? 9 : 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
         IconButton(
-          icon: const Icon(Icons.leaderboard, color: Color(0xFFFBBC05)),
+          constraints: constraints,
+          padding: EdgeInsets.zero,
+          icon: Icon(Icons.leaderboard, color: const Color(0xFFFBBC05), size: iconSize),
           onPressed: () {
             _refreshLeaderboard();
             Scaffold.of(context).openEndDrawer();
@@ -1008,11 +1069,11 @@ class _GameScreenState extends State<GameScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: activeColor.withOpacity(0.3), width: 1),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: EdgeInsets.symmetric(vertical: _cellHeight < 28 ? 4.0 : 8.0, horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person, color: activeColor, size: 18),
+          Icon(Icons.person, color: activeColor, size: _cellHeight < 28 ? 14.0 : 18.0),
           const SizedBox(width: 8),
           Text(
             "TURN: ${activePlayerName.toUpperCase()}",
@@ -1020,7 +1081,7 @@ class _GameScreenState extends State<GameScreen> {
               fontWeight: FontWeight.w900,
               letterSpacing: 1.5,
               color: activeColor,
-              fontSize: 14,
+              fontSize: _cellHeight < 28 ? 11.0 : 14.0,
             ),
           ),
         ],
@@ -1120,7 +1181,7 @@ class _GameScreenState extends State<GameScreen> {
 
   Widget _buildDiceArena() {
     return Container(
-      height: 125,
+      height: _diceArenaHeight,
       decoration: BoxDecoration(
         color: const Color(0xFF202430),
         borderRadius: BorderRadius.circular(20),
@@ -1153,40 +1214,49 @@ class _GameScreenState extends State<GameScreen> {
               'ROLLS REMAINING: ${_engine.rollsRemaining}/3',
               style: TextStyle(
                 fontWeight: FontWeight.bold, 
-                fontSize: 12, 
+                fontSize: (_cellHeight < 28 ? 10.0 : 12.0) * _textSizeMultiplier, 
                 color: activeColor,
               ),
             ),
-            const SizedBox(height: 2),
-            Text(
-              _engine.rollsRemaining == 3 
-                  ? 'Roll dice to begin!' 
-                  : _engine.rollsRemaining == 0 
-                      ? 'Select score category' 
-                      : 'Tap to hold, roll again!',
-              style: const TextStyle(color: Color(0xFFA0A5B5), fontSize: 11),
-            ),
+            if (_cellHeight >= 28) ...[
+              const SizedBox(height: 2),
+              Text(
+                _engine.rollsRemaining == 3 
+                    ? 'Roll dice to begin!' 
+                    : _engine.rollsRemaining == 0 
+                        ? 'Select score category' 
+                        : 'Tap to hold, roll again!',
+                style: TextStyle(color: const Color(0xFFA0A5B5), fontSize: 11 * _textSizeMultiplier),
+              ),
+            ],
           ],
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: activeColor,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: _cellHeight < 28 ? 12 : 20,
+              vertical: _cellHeight < 28 ? 8 : 12,
+            ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(_cellHeight < 28 ? 10 : 16),
             ),
             elevation: 4,
           ),
           onPressed: canRoll ? _rollDice : null,
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.casino, size: 18),
-              SizedBox(width: 8),
+              Icon(Icons.casino, size: _cellHeight < 28 ? 14 : 18),
+              SizedBox(width: _cellHeight < 28 ? 4 : 8),
               Text(
                 'ROLL DICE',
-                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                  fontSize: (_cellHeight < 28 ? 11.0 : 13.0) * _textSizeMultiplier,
+                ),
               ),
             ],
           ),
@@ -1260,14 +1330,14 @@ class _GameScreenState extends State<GameScreen> {
     return TableRow(
       children: [
         _buildTableCell(
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6.0),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: _cellHeight < 28 ? 4.0 : 6.0),
             child: Text(
               'CATEGORY',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 10,
-                color: Color(0xFF1F2430),
+                fontSize: 10 * _textSizeMultiplier,
+                color: const Color(0xFF1F2430),
                 letterSpacing: 0.5,
               ),
             ),
@@ -1279,7 +1349,7 @@ class _GameScreenState extends State<GameScreen> {
             p2Name.toUpperCase(),
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 11,
+              fontSize: 11 * _textSizeMultiplier,
               color: isP2Active ? const Color(0xFFEF5350) : const Color(0xFF1F2430),
               decoration: isP2Active ? TextDecoration.underline : null,
               decorationColor: const Color(0xFFEF5350),
@@ -1293,7 +1363,7 @@ class _GameScreenState extends State<GameScreen> {
             p1Name.toUpperCase(),
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 11,
+              fontSize: 11 * _textSizeMultiplier,
               color: isP1Active ? const Color(0xFF2196F3) : const Color(0xFF1F2430),
               decoration: isP1Active ? TextDecoration.underline : null,
               decorationColor: const Color(0xFF2196F3),
@@ -1319,10 +1389,11 @@ class _GameScreenState extends State<GameScreen> {
     final showPreview = hasRolled && !_isRolling;
 
     final categoryChild = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: EdgeInsets.symmetric(vertical: _cellHeight < 28 ? 2.0 : 4.0),
       child: CategorySymbolWidget(
         category: category,
         color: const Color(0xFF1F2430),
+        height: _cellHeight * 0.58,
       ),
     );
 
@@ -1333,10 +1404,10 @@ class _GameScreenState extends State<GameScreen> {
       p2BgColor = const Color(0xFFFAF4E7);
       p2Cell = Text(
         '$p2Score',
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w900,
-          color: Color(0xFF1F2430),
-          fontSize: 13,
+          color: const Color(0xFF1F2430),
+          fontSize: 13 * _textSizeMultiplier,
         ),
       );
     } else if (isActiveP2 && showPreview) {
@@ -1348,7 +1419,7 @@ class _GameScreenState extends State<GameScreen> {
           fontWeight: FontWeight.bold,
           color: const Color(0xFFEF5350).withOpacity(0.7),
           fontStyle: FontStyle.italic,
-          fontSize: 12,
+          fontSize: 12 * _textSizeMultiplier,
         ),
       );
     } else {
@@ -1363,10 +1434,10 @@ class _GameScreenState extends State<GameScreen> {
       p1BgColor = const Color(0xFFFAF4E7);
       p1Cell = Text(
         '$p1Score',
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w900,
-          color: Color(0xFF1F2430),
-          fontSize: 13,
+          color: const Color(0xFF1F2430),
+          fontSize: 13 * _textSizeMultiplier,
         ),
       );
     } else if (isActiveP1 && showPreview) {
@@ -1378,7 +1449,7 @@ class _GameScreenState extends State<GameScreen> {
           fontWeight: FontWeight.bold,
           color: const Color(0xFF2196F3).withOpacity(0.7),
           fontStyle: FontStyle.italic,
-          fontSize: 12,
+          fontSize: 12 * _textSizeMultiplier,
         ),
       );
     } else {
@@ -1425,14 +1496,14 @@ class _GameScreenState extends State<GameScreen> {
       children: [
         _buildTableCell(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            padding: EdgeInsets.symmetric(horizontal: _cellHeight < 28 ? 4.0 : 6.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: isGrand ? 12 : 11,
+                  fontSize: (isGrand ? 12.0 : 11.0) * _textSizeMultiplier,
                   color: isGrand ? const Color(0xFFFBBC05) : const Color(0xFF1F2430),
                 ),
               ),
@@ -1445,7 +1516,7 @@ class _GameScreenState extends State<GameScreen> {
             isGrand ? '$p2Score' : (label.contains('Bonus') ? '+$p2Score' : '$p2Score'),
             style: TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: isGrand ? 14 : 12,
+              fontSize: (isGrand ? 14.0 : 12.0) * _textSizeMultiplier,
               color: isGrand ? const Color(0xFFFBBC05) : const Color(0xFF1F2430),
             ),
           ),
@@ -1456,7 +1527,7 @@ class _GameScreenState extends State<GameScreen> {
             isGrand ? '$p1Score' : (label.contains('Bonus') ? '+$p1Score' : '$p1Score'),
             style: TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: isGrand ? 14 : 12,
+              fontSize: (isGrand ? 14.0 : 12.0) * _textSizeMultiplier,
               color: isGrand ? const Color(0xFFFBBC05) : const Color(0xFF1F2430),
             ),
           ),
@@ -1473,7 +1544,7 @@ class _GameScreenState extends State<GameScreen> {
     VoidCallback? onTap,
   }) {
     Widget content = Container(
-      height: 34,
+      height: _cellHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: backgroundColor ?? const Color(0xFFFAF4E7),
@@ -1856,32 +1927,33 @@ class CategorySymbolPainter extends CustomPainter {
 class CategorySymbolWidget extends StatelessWidget {
   final ScoringCategory category;
   final Color color;
+  final double height;
 
   const CategorySymbolWidget({
     super.key,
     required this.category,
     required this.color,
+    this.height = 20.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final double height = 20.0;
     final double width;
     switch (category) {
       case ScoringCategory.threeOfAKind:
-        width = 60.0;
+        width = height * 3.0;
         break;
       case ScoringCategory.fourOfAKind:
       case ScoringCategory.smallStraight:
-        width = 80.0;
+        width = height * 4.0;
         break;
       case ScoringCategory.fullHouse:
       case ScoringCategory.largeStraight:
       case ScoringCategory.yatzy:
-        width = 100.0;
+        width = height * 5.0;
         break;
       default:
-        width = 24.0;
+        width = height * 1.2;
     }
     return SizedBox(
       width: width,

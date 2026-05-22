@@ -32,21 +32,25 @@ body {
   background-image: var(--color-bg-gradient);
   background-attachment: fixed;
   color: var(--color-text-primary);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* App container */
 .app-container {
   width: 100%;
   max-width: 680px;
-  padding: 20px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   position: relative;
+  overflow: hidden;
 }
 
 /* Setup Screen styling */
@@ -852,4 +856,191 @@ canvas {
   background-color: var(--color-border);
   border-radius: 3px;
 }
+
+/* Responsive layout adjusting for shorter screen heights */
+@media (max-height: 850px) {
+  .app-container {
+    padding: 12px;
+    gap: 8px;
+  }
+  .setup-screen {
+    gap: 12px;
+    min-height: auto;
+  }
+  .setup-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  .setup-card img {
+    width: 80px !important;
+    height: 80px !important;
+    margin-bottom: 8px !important;
+  }
+  .setup-card h1 {
+    font-size: 24px !important;
+    margin-bottom: 2px !important;
+  }
+  .setup-card p {
+    font-size: 12px !important;
+    margin-bottom: 4px !important;
+  }
+  .game-board-card {
+    padding: 12px;
+    gap: 8px;
+  }
+  header {
+    min-height: 36px;
+    padding: 4px 0;
+  }
+  header h1 {
+    font-size: 16px;
+  }
+  .header-logo {
+    width: 24px;
+    height: 24px;
+  }
+  .btn-header {
+    font-size: 16px;
+    padding: 4px;
+  }
+  .turn-strip {
+    padding: 4px 12px;
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+  .canvas-container {
+    height: 110px;
+    border-radius: 12px;
+  }
+  .scorecard-table td {
+    height: 26px;
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+  .scorecard-table td.category-cell {
+    padding: 2px 4px;
+  }
+  .svg-cat-icon {
+    width: 14px;
+    height: 14px;
+  }
+  .svg-cat-icon-wide {
+    height: 10px;
+  }
+  .player-cell {
+    font-size: 12px;
+  }
+  .summary-row-tr td {
+    padding: 4px 6px;
+  }
+  .summary-row-tr.grand-total td.grand-val {
+    font-size: 14px;
+  }
+  .summary-label {
+    font-size: 9.5px;
+  }
+  .btn-roll {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  .status-rolls {
+    font-size: 12px;
+  }
+  .status-desc {
+    font-size: 10px;
+  }
+}
+
+@media (max-height: 650px) {
+  .app-container {
+    padding: 6px;
+    gap: 4px;
+  }
+  .setup-screen {
+    gap: 8px;
+  }
+  .setup-card {
+    padding: 8px;
+    gap: 6px;
+  }
+  .setup-card img {
+    width: 60px !important;
+    height: 60px !important;
+    margin-bottom: 4px !important;
+  }
+  .setup-card h1 {
+    font-size: 20px !important;
+  }
+  .setup-card p {
+    font-size: 11px !important;
+    display: none;
+  }
+  .setup-card p:first-of-type {
+    display: block;
+  }
+  .game-board-card {
+    padding: 8px;
+    gap: 4px;
+    border-radius: 16px;
+  }
+  header {
+    min-height: 28px;
+    padding: 2px 0;
+  }
+  header h1 {
+    font-size: 14px;
+  }
+  .btn-header {
+    font-size: 14px;
+    padding: 2px;
+  }
+  .turn-strip {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+  .canvas-container {
+    height: 90px;
+    border-radius: 10px;
+  }
+  .scorecard-table td {
+    height: 21px;
+    padding: 1px 2px;
+    font-size: 10.5px;
+  }
+  .scorecard-table td.category-cell {
+    padding: 1px 2px;
+  }
+  .svg-cat-icon {
+    width: 12px;
+    height: 12px;
+  }
+  .svg-cat-icon-wide {
+    height: 8px;
+  }
+  .player-cell {
+    font-size: 10.5px;
+  }
+  .summary-row-tr td {
+    padding: 2px 4px;
+  }
+  .summary-row-tr.grand-total td.grand-val {
+    font-size: 12px;
+  }
+  .summary-label {
+    font-size: 8.5px;
+  }
+  .btn-roll {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+  .status-rolls {
+    font-size: 11px;
+  }
+  .status-desc {
+    display: none;
+  }
+}
+
 
