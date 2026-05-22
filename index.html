@@ -35,10 +35,15 @@
     <!-- Setup Screen -->
     <div id="setup-screen" class="setup-screen">
       <div class="setup-card" style="position: relative;">
-        <!-- Theme Toggle -->
-        <button id="btn-theme-toggle-setup" class="btn-header" title="Toggle Theme" style="position: absolute; top: 16px; right: 16px; border: 1.5px solid var(--color-border); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent;">
-          <span class="material-symbols-outlined" style="font-size: 20px;">light_mode</span>
-        </button>
+        <!-- Theme & Rules Buttons -->
+        <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px;">
+          <button id="btn-rules-setup" class="btn-header" title="Rules & Guide" style="border: 1.5px solid var(--color-border); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">help</span>
+          </button>
+          <button id="btn-theme-toggle-setup" class="btn-header" title="Toggle Theme" style="border: 1.5px solid var(--color-border); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">light_mode</span>
+          </button>
+        </div>
 
         <img src="assets/images/logo.png" alt="YATZY! Logo" style="width: 120px; height: 120px; border-radius: 24px; margin: 0 auto 16px auto; display: block; box-shadow: 0 0 25px rgba(251, 188, 5, 0.4); border: 2px solid var(--color-accent-gold);">
         <h1 style="font-size: 36px; font-weight: 900; letter-spacing: 2px; text-align: center; color: var(--color-accent-gold); margin-bottom: 4px;">YATZY!</h1>
@@ -67,6 +72,14 @@
         <button id="btn-start" class="btn-roll" style="width: 100%; justify-content: center; margin-top: 10px;">
           START MATCH
         </button>
+        
+        <!-- Resume Game Section -->
+        <div id="resume-section" style="display: none; margin-top: 10px; width: 100%;">
+          <button id="btn-resume" class="btn-roll" style="width: 100%; justify-content: center; background: transparent; border: 1.5px solid var(--color-accent-gold); color: var(--color-accent-gold);">
+            <span class="material-symbols-outlined" style="margin-right: 8px;">play_arrow</span>
+            RESUME MATCH
+          </button>
+        </div>
       </div>
     </div>
 
@@ -82,6 +95,9 @@
           <h1>YATZY!</h1>
         </div>
         <div class="header-buttons" style="margin-left: auto;">
+          <button id="btn-rules" class="btn-header" title="Rules & Guide">
+            <span class="material-symbols-outlined">help</span>
+          </button>
           <button id="btn-theme-toggle-game" class="btn-header" title="Toggle Theme">
             <span class="material-symbols-outlined">light_mode</span>
           </button>
@@ -163,6 +179,93 @@
       </div>
       <button id="btn-handoff-confirm" class="btn-roll" style="width: auto;">
         I am ready!
+      </button>
+    </div>
+  </div>
+
+  <!-- Rules & Guide Modal -->
+  <div id="rules-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px; text-align: left; max-height: 85vh; overflow-y: auto; display: block;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--color-border); padding-bottom: 10px; margin-bottom: 15px;">
+        <div class="modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined" style="color: var(--color-accent-gold);">help</span>
+          YATZY! Rules Guide
+        </div>
+        <button id="btn-close-rules" class="btn-header" style="width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      
+      <div style="font-size: 14px; line-height: 1.6; color: var(--color-text-primary);">
+        <p style="margin-top: 0;"><strong>YATZY!</strong> is a classic dice board game played with 5 dice. Your objective is to score the highest total by rolling combinations and filling out your scorecard.</p>
+        
+        <h3 style="color: var(--color-accent-gold); font-size: 16px; margin: 16px 0 8px 0; border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Gameplay</h3>
+        <ul style="padding-left: 20px; margin: 0 0 16px 0;">
+          <li>A match consists of 13 rounds per player.</li>
+          <li>On your turn, you can roll the dice up to <strong>3 times</strong>.</li>
+          <li>After the 1st or 2nd roll, tap any dice you want to <strong>hold</strong> (they won't be re-rolled).</li>
+          <li>Before your turn ends, you must select one empty scoring category to record your score.</li>
+        </ul>
+        
+        <h3 style="color: var(--color-accent-gold); font-size: 16px; margin: 16px 0 8px 0; border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Scoring Categories</h3>
+        
+        <h4 style="margin: 8px 0 4px 0; color: var(--color-text-primary);">Upper Section (Ones to Sixes)</h4>
+        <ul style="padding-left: 20px; margin: 0 0 12px 0;">
+          <li>Sum of all dice showing that number. For example, rolling <span style="color: var(--color-accent-gold);">⚃ ⚃ ⚂ ⚄ ⚁</span> and scoring in <strong>Fours</strong> yields 8 points.</li>
+          <li><strong>Upper Section Bonus:</strong> If the sum of your Upper Section scores is <strong>63 or more</strong>, you receive a <strong>+35 bonus</strong>.</li>
+        </ul>
+        
+        <h4 style="margin: 8px 0 4px 0; color: var(--color-text-primary);">Lower Section (Combinations)</h4>
+        <table class="rules-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 1.5px solid var(--color-border); text-align: left;">
+              <th style="padding: 6px 4px;">Category</th>
+              <th style="padding: 6px 4px;">Requirements</th>
+              <th style="padding: 6px 4px; text-align: right;">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Three of a Kind</td>
+              <td style="padding: 6px 4px;">At least 3 matching dice</td>
+              <td style="padding: 6px 4px; text-align: right;">Sum of all dice</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Four of a Kind</td>
+              <td style="padding: 6px 4px;">At least 4 matching dice</td>
+              <td style="padding: 6px 4px; text-align: right;">Sum of all dice</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Full House</td>
+              <td style="padding: 6px 4px;">3 of one number & 2 of another</td>
+              <td style="padding: 6px 4px; text-align: right;">Fixed 25 pts</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Small Straight</td>
+              <td style="padding: 6px 4px;">4 sequential dice (e.g. 1-2-3-4)</td>
+              <td style="padding: 6px 4px; text-align: right;">Fixed 30 pts</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Large Straight</td>
+              <td style="padding: 6px 4px;">5 sequential dice (e.g. 1-2-3-4-5)</td>
+              <td style="padding: 6px 4px; text-align: right;">Fixed 40 pts</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Yatzy!</td>
+              <td style="padding: 6px 4px;">All 5 dice matching</td>
+              <td style="padding: 6px 4px; text-align: right;">Fixed 50 pts</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 6px 4px; font-weight: bold;">Chance</td>
+              <td style="padding: 6px 4px;">Any combination of dice</td>
+              <td style="padding: 6px 4px; text-align: right;">Sum of all dice</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <button id="btn-close-rules-bottom" class="btn-roll" style="width: 100%; margin-top: 15px; justify-content: center;">
+        Got it, let's play!
       </button>
     </div>
   </div>

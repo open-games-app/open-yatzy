@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../domain/yatzy_engine.dart';
 import 'dice_component.dart';
 
@@ -39,6 +40,8 @@ class YatzyGame extends FlameGame with HasTapCallbacks {
           if (succeeded) {
             _diceComponents[i].held = engine.heldDice[i];
             _diceComponents[i].triggerTapBounce();
+            HapticFeedback.lightImpact();
+            SystemSound.play(SystemSoundType.click);
             onStateChanged();
           }
         },
@@ -77,6 +80,19 @@ class YatzyGame extends FlameGame with HasTapCallbacks {
       _diceComponents[i].targetValue = 1;
       _diceComponents[i].angle = 0;
       _diceComponents[i].scaleFactor = 1.0;
+    }
+  }
+
+  /// Sync visual dice state to match current engine values and holds.
+  void syncVisualsToEngine() {
+    if (_diceComponents.length == 5) {
+      for (int i = 0; i < 5; i++) {
+        _diceComponents[i].held = engine.heldDice[i];
+        _diceComponents[i].visualValue = engine.diceValues[i];
+        _diceComponents[i].targetValue = engine.diceValues[i];
+        _diceComponents[i].angle = 0;
+        _diceComponents[i].scaleFactor = 1.0;
+      }
     }
   }
 

@@ -274,4 +274,31 @@ class YatzyEngine {
     final idx = playerIndex ?? _activePlayerIndex;
     return getUpperSectionSum(idx) + getUpperSectionBonus(idx) + getLowerSectionSum(idx);
   }
+
+  /// Restore the engine state from serialized values.
+  void restoreState({
+    required int playerCount,
+    required List<String> playerNames,
+    required int activePlayerIndex,
+    required List<Map<ScoringCategory, int?>> scorecards,
+    required List<int> diceValues,
+    required List<bool> heldDice,
+    required int rollsRemaining,
+    required bool isGameOver,
+  }) {
+    _playerCount = playerCount;
+    _playerNames = List.from(playerNames);
+    _activePlayerIndex = activePlayerIndex;
+    
+    _scorecards.clear();
+    for (var card in scorecards) {
+      _scorecards.add(Map<ScoringCategory, int?>.from(card));
+    }
+    
+    _diceValues = List.from(diceValues);
+    _heldDice = List.from(heldDice);
+    _rollsRemaining = rollsRemaining;
+    _isGameOver = isGameOver;
+  }
 }
+

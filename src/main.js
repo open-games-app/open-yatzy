@@ -1,6 +1,7 @@
 import { YatzyEngine, ScoringCategory } from './engine.js';
 import { DiceComponent } from './dice.js';
 import { SocialPlatform } from './social.js';
+import { audio } from './audio.js';
 
 // Setup elements
 const canvas = document.getElementById('game-canvas');
@@ -173,6 +174,9 @@ function init() {
     }
 
     engine.setupPlayers(selectedPlayerCount, names);
+    localStorage.removeItem('saved_yatzy_match');
+    const resumeSection = document.getElementById('resume-section');
+    if (resumeSection) resumeSection.style.display = 'none';
 
     // Swap views
     document.getElementById('setup-screen').style.display = 'none';
@@ -183,6 +187,55 @@ function init() {
     setupDice();
     updateUI();
   });
+
+  // Resume match
+  const btnResume = document.getElementById('btn-resume');
+  const resumeSection = document.getElementById('resume-section');
+  if (localStorage.getItem('saved_yatzy_match')) {
+    resumeSection.style.display = 'block';
+  }
+  if (btnResume) {
+    btnResume.addEventListener('click', () => {
+      const loaded = loadGameState();
+      if (loaded) {
+        // Swap views
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        
+        // Refresh layout
+        resizeCanvas();
+        setupDice();
+        
+        // Set visual holds and values on the loaded dice
+        diceComponents.forEach((die, i) => {
+          die.visualValue = engine.diceValues[i];
+          die.targetValue = engine.diceValues[i];
+          die.held = engine.heldDice[i];
+        });
+        
+        updateUI();
+      }
+    });
+  }
+
+  // Rules Modal bindings
+  const rulesModal = document.getElementById('rules-modal');
+  const btnRulesSetup = document.getElementById('btn-rules-setup');
+  const btnRulesGame = document.getElementById('btn-rules');
+  const btnCloseRules = document.getElementById('btn-close-rules');
+  const btnCloseRulesBottom = document.getElementById('btn-close-rules-bottom');
+
+  const openRules = () => {
+    rulesModal.classList.add('open');
+  };
+  const closeRules = () => {
+    rulesModal.classList.remove('open');
+  };
+
+  if (btnRulesSetup) btnRulesSetup.addEventListener('click', openRules);
+  if (btnRulesGame) btnRulesGame.addEventListener('click', openRules);
+  if (btnCloseRules) btnCloseRules.addEventListener('click', closeRules);
+  if (btnCloseRulesBottom) btnCloseRulesBottom.addEventListener('click', closeRules);
 
   // Confirm turn handoff
   document.getElementById('btn-handoff-confirm').addEventListener('click', () => {
@@ -205,6 +258,50 @@ function init() {
 
   // Start animation loop
   requestAnimationFrame(loop);
+}
+
+// Game state saving / resuming
+function saveGameState() {
+  if (engine.isGameOver) {
+    localStorage.removeItem('saved_yatzy_match');
+    return;
+  }
+  const state = {
+    playerCount: engine.playerCount,
+    playerNames: engine.playerNames,
+    activePlayerIndex: engine.activePlayerIndex,
+    scorecards: engine.scorecards,
+    diceValues: engine.diceValues,
+    heldDice: engine.heldDice,
+    rollsRemaining: engine.rollsRemaining,
+    isGameOver: engine.isGameOver
+  };
+  localStorage.setItem('saved_yatzy_match', JSON.stringify(state));
+}
+
+function loadGameState() {
+  const serialized = localStorage.getItem('saved_yatzy_match');
+  if (!serialized) return false;
+  try {
+    const state = JSON.parse(serialized);
+    if (!state || state.isGameOver) return false;
+
+    engine.playerCount = state.playerCount;
+    engine.playerNames = state.playerNames;
+    engine.activePlayerIndex = state.activePlayerIndex;
+    engine.scorecards = state.scorecards;
+    engine.diceValues = state.diceValues;
+    engine.heldDice = state.heldDice;
+    engine.rollsRemaining = state.rollsRemaining;
+    engine.isGameOver = state.isGameOver;
+
+    selectedPlayerCount = state.playerCount;
+
+    return true;
+  } catch (e) {
+    console.error("Error loading game state:", e);
+    return false;
+  }
 }
 
 // Player Setup controller
@@ -268,6 +365,11 @@ function setupDice() {
       if (succeeded) {
         die.held = engine.heldDice[i];
         die.triggerTapBounce();
+        audio.playClick();
+        if (navigator.vibrate) {
+          navigator.vibrate(30);
+        }
+        saveGameState();
         updateUI();
       }
     });
@@ -331,6 +433,11 @@ function rollDice() {
     isDiceRolling = true;
     engine.rollDice();
 
+    audio.playRoll();
+    if (navigator.vibrate) {
+      navigator.vibrate([40, 30, 40]);
+    }
+
     // Sync components and trigger rolls
     diceComponents.forEach((die, i) => {
       die.held = engine.heldDice[i];
@@ -339,6 +446,7 @@ function rollDice() {
       }
     });
 
+    saveGameState();
     updateUI();
   }
 }
@@ -354,6 +462,11 @@ function selectCategory(category) {
 
   const succeeded = engine.selectCategory(category);
   if (succeeded) {
+    audio.playScore();
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
     // Reset visual die statuses
     diceComponents.forEach(die => {
       die.held = false;
@@ -364,6 +477,12 @@ function selectCategory(category) {
     });
 
     if (engine.isGameOver) {
+      localStorage.removeItem('saved_yatzy_match');
+      const resumeSection = document.getElementById('resume-section');
+      if (resumeSection) resumeSection.style.display = 'none';
+
+      audio.playGameOver();
+
       let maxScore = 0;
       for (let i = 0; i < engine.playerCount; i++) {
         const score = engine.getTotalScore(i);
@@ -374,6 +493,7 @@ function selectCategory(category) {
         showGameOver();
       });
     } else {
+      saveGameState();
       if (engine.playerCount > 1) {
         const nextPlayerName = engine.playerNames[engine.activePlayerIndex];
         showHandoffModal(nextPlayerName);
@@ -385,19 +505,24 @@ function selectCategory(category) {
 }
 
 function resetGame() {
-  engine.resetGame();
+  if (confirm("Are you sure you want to reset the current match? Your progress will be lost.")) {
+    engine.resetGame();
+    localStorage.removeItem('saved_yatzy_match');
+    const resumeSection = document.getElementById('resume-section');
+    if (resumeSection) resumeSection.style.display = 'none';
 
-  // Clear visual die holds
-  diceComponents.forEach(die => {
-    die.held = false;
-    die.visualValue = 1;
-    die.targetValue = 1;
-    die.angle = 0;
-    die.scaleFactor = 1.0;
-  });
+    // Clear visual die holds
+    diceComponents.forEach(die => {
+      die.held = false;
+      die.visualValue = 1;
+      die.targetValue = 1;
+      die.angle = 0;
+      die.scaleFactor = 1.0;
+    });
 
-  modal.classList.remove('open');
-  updateUI();
+    modal.classList.remove('open');
+    updateUI();
+  }
 }
 
 function showHandoffModal(playerName) {

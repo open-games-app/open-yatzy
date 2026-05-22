@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'domain/yatzy_engine.dart';
 import 'graphics/yatzy_game.dart';
 import 'social/social_platform.dart';
@@ -53,6 +56,7 @@ class _GameScreenState extends State<GameScreen> {
   int _setupPlayerCount = 1;
   final List<TextEditingController> _nameControllers = [];
   bool _isRolling = false;
+  bool _hasSavedGame = false;
 
   @override
   void initState() {
@@ -68,9 +72,11 @@ class _GameScreenState extends State<GameScreen> {
         setState(() {
           _isRolling = _game.isAnyDieRolling();
         });
+        _saveGameState();
       },
     );
     _initSocial();
+    _checkSavedMatch();
   }
 
   @override
@@ -107,13 +113,298 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  // Persistence methods
+  Future<void> _saveGameState() async {
+    if (_engine.isGameOver) {
+      await _deleteSavedMatch();
+      return;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> serializedScorecards = [];
+      for (var scorecard in _engine.scorecards) {
+        final Map<String, dynamic> cardMap = {};
+        scorecard.forEach((category, value) {
+          cardMap[category.name] = value;
+        });
+        serializedScorecards.add(cardMap);
+      }
+
+      final state = {
+        'playerCount': _engine.playerCount,
+        'playerNames': _engine.playerNames,
+        'activePlayerIndex': _engine.activePlayerIndex,
+        'scorecards': serializedScorecards,
+        'diceValues': _engine.diceValues,
+        'heldDice': _engine.heldDice,
+        'rollsRemaining': _engine.rollsRemaining,
+        'isGameOver': _engine.isGameOver,
+      };
+
+      await prefs.setString('saved_yatzy_match', jsonEncode(state));
+      setState(() {
+        _hasSavedGame = true;
+      });
+    } catch (e) {
+      debugPrint("Error saving game state: $e");
+    }
+  }
+
+  Future<void> _deleteSavedMatch() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('saved_yatzy_match');
+      setState(() {
+        _hasSavedGame = false;
+      });
+    } catch (e) {
+      debugPrint("Error deleting saved match: $e");
+    }
+  }
+
+  Future<void> _checkSavedMatch() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSaved = prefs.containsKey('saved_yatzy_match');
+      setState(() {
+        _hasSavedGame = hasSaved;
+      });
+    } catch (e) {
+      debugPrint("Error checking saved match: $e");
+    }
+  }
+
+  Future<bool> _loadGameState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final serialized = prefs.getString('saved_yatzy_match');
+      if (serialized == null) return false;
+
+      final state = jsonDecode(serialized) as Map<String, dynamic>;
+      final isGameOver = state['isGameOver'] as bool;
+      if (isGameOver) {
+        await _deleteSavedMatch();
+        return false;
+      }
+
+      final playerCount = state['playerCount'] as int;
+      final playerNames = List<String>.from(state['playerNames'] as List);
+      final activePlayerIndex = state['activePlayerIndex'] as int;
+      final rollsRemaining = state['rollsRemaining'] as int;
+      final diceValues = List<int>.from(state['diceValues'] as List);
+      final heldDice = List<bool>.from(state['heldDice'] as List);
+
+      final List<Map<ScoringCategory, int?>> scorecards = [];
+      final listScorecards = state['scorecards'] as List;
+      for (var cardObj in listScorecards) {
+        final cardMap = cardObj as Map<String, dynamic>;
+        final Map<ScoringCategory, int?> scorecard = {};
+        for (var category in ScoringCategory.values) {
+          if (cardMap.containsKey(category.name)) {
+            scorecard[category] = cardMap[category.name] as int?;
+          } else {
+            scorecard[category] = null;
+          }
+        }
+        scorecards.add(scorecard);
+      }
+
+      _engine.restoreState(
+        playerCount: playerCount,
+        playerNames: playerNames,
+        activePlayerIndex: activePlayerIndex,
+        scorecards: scorecards,
+        diceValues: diceValues,
+        heldDice: heldDice,
+        rollsRemaining: rollsRemaining,
+        isGameOver: isGameOver,
+      );
+
+      setState(() {
+        _setupPlayerCount = playerCount;
+        for (int i = 0; i < playerCount; i++) {
+          if (i < _nameControllers.length) {
+            _nameControllers[i].text = playerNames[i];
+          }
+        }
+      });
+
+      return true;
+    } catch (e) {
+      debugPrint("Error loading game state: $e");
+      await _deleteSavedMatch();
+      return false;
+    }
+  }
+
+  // Rules Guide Modal
+  void _showRulesDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF162E24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF1B3D2F), width: 1.5),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.help, color: Color(0xFFFBBC05), size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'YATZY! Rules Guide',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05), fontSize: 18),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.65),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'YATZY! is a classic dice board game played with 5 dice. Your objective is to score the highest total by rolling combinations and filling out your scorecard.',
+                    style: TextStyle(fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Gameplay',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFFBBC05)),
+                  ),
+                  const Divider(color: Color(0xFF1B3D2F)),
+                  _buildBulletPoint('A match consists of 13 rounds per player.'),
+                  _buildBulletPoint('On your turn, you can roll the dice up to 3 times.'),
+                  _buildBulletPoint('After the 1st or 2nd roll, tap any dice you want to hold (they won\'t be re-rolled).'),
+                  _buildBulletPoint('Before your turn ends, you must select one empty scoring category to record your score.'),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Scoring Categories',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFFBBC05)),
+                  ),
+                  const Divider(color: Color(0xFF1B3D2F)),
+                  const Text(
+                    'Upper Section (Ones to Sixes)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildBulletPoint('Sum of all dice showing that number. (e.g., rolling ⚃ ⚃ ⚂ ⚄ ⚁ and scoring in Fours yields 8 pts).'),
+                  _buildBulletPoint('Upper Section Bonus: If the sum of your Upper Section scores is 63 or more, you receive a +35 bonus.'),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Lower Section (Combinations)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                  ),
+                  const SizedBox(height: 6),
+                  Table(
+                    columnWidths: const {
+                      0: FlexColumnWidth(3),
+                      1: FlexColumnWidth(4.5),
+                      2: FlexColumnWidth(2.5),
+                    },
+                    border: TableBorder(
+                      horizontalInside: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
+                    ),
+                    children: [
+                      const TableRow(
+                        children: [
+                          Padding(padding: EdgeInsets.symmetric(vertical: 4), child: Text('Category', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05), fontSize: 11))),
+                          Padding(padding: EdgeInsets.symmetric(vertical: 4), child: Text('Requirements', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05), fontSize: 11))),
+                          Padding(padding: EdgeInsets.symmetric(vertical: 4), child: Text('Score', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05), fontSize: 11), textAlign: TextAlign.right)),
+                        ],
+                      ),
+                      _buildRulesTableRow('3 of a Kind', '3+ matching dice', 'Sum of dice'),
+                      _buildRulesTableRow('4 of a Kind', '4+ matching dice', 'Sum of dice'),
+                      _buildRulesTableRow('Full House', '3 matching & pair', '25 pts'),
+                      _buildRulesTableRow('Sm. Straight', 'Sequence of 4', '30 pts'),
+                      _buildRulesTableRow('Lg. Straight', 'Sequence of 5', '40 pts'),
+                      _buildRulesTableRow('Yatzy!', 'All 5 matching', '50 pts'),
+                      _buildRulesTableRow('Chance', 'Any combination', 'Sum of dice'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            Center(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFBBC05),
+                    foregroundColor: const Color(0xFF0B1C15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Got it, let\'s play!', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBulletPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('• ', style: TextStyle(color: Color(0xFFFBBC05), fontSize: 14)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 12, height: 1.4, color: Colors.white90),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  TableRow _buildRulesTableRow(String category, String requirement, String score) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(category, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.white)),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(requirement, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(score, style: const TextStyle(fontSize: 11, color: Color(0xFFFBBC05)), textAlign: TextAlign.right),
+        ),
+      ],
+    );
+  }
+
   void _rollDice() {
     if (_engine.rollsRemaining > 0 && !_engine.isGameOver && !_isRolling) {
+      HapticFeedback.mediumImpact();
+      SystemSound.play(SystemSoundType.click);
       setState(() {
         _engine.rollDice();
         _isRolling = true;
       });
       _game.triggerRollAnimation();
+      _saveGameState();
     }
   }
 
@@ -125,18 +416,20 @@ class _GameScreenState extends State<GameScreen> {
       return;
     }
     if (_isRolling) {
-      return; // Block scoring during animation
+      return;
     }
     
     final succeeded = _engine.selectCategory(category);
     if (succeeded) {
+      HapticFeedback.heavyImpact();
+      SystemSound.play(SystemSoundType.click);
       _game.resetVisuals();
       setState(() {
         _isRolling = false;
       });
 
       if (_engine.isGameOver) {
-        // Submit highest score among players to the global leaderboard
+        await _deleteSavedMatch();
         int maxScore = 0;
         for (int i = 0; i < _engine.playerCount; i++) {
           final total = _engine.getTotalScore(i);
@@ -147,16 +440,56 @@ class _GameScreenState extends State<GameScreen> {
         await _social.submitScore(maxScore);
         _refreshLeaderboard();
         _showGameOverDialog();
+      } else {
+        await _saveGameState();
       }
     }
   }
 
   void _resetGame() {
-    setState(() {
-      _engine.resetGame();
-      _game.resetVisuals();
-      _isRolling = false;
-    });
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF162E24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFF1B3D2F), width: 1.5),
+          ),
+          title: const Text(
+            'Reset Match?',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05)),
+          ),
+          content: const Text(
+            'Are you sure you want to reset the current match? Your progress will be lost.',
+            style: TextStyle(color: Colors.white90),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFBBC05),
+                foregroundColor: const Color(0xFF0B1C15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _engine.resetGame();
+                  _game.resetVisuals();
+                  _isRolling = false;
+                });
+                _deleteSavedMatch();
+              },
+              child: const Text('Reset', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showGameOverDialog() {
@@ -297,6 +630,10 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Color(0xFFFBBC05)),
+            onPressed: _showRulesDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.grey),
             onPressed: _resetGame,
@@ -444,18 +781,28 @@ class _GameScreenState extends State<GameScreen> {
   /// Builds a setup widget to configure player count and names before matching.
   Widget _buildSetupScreen() {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B1C15),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Color(0xFFFBBC05)),
+            onPressed: _showRulesDialog,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 24),
+                      margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
@@ -499,7 +846,101 @@ class _GameScreenState extends State<GameScreen> {
                     style: TextStyle(color: Colors.grey, fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
+                  
+                  if (_hasSavedGame) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF162E24),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFBBC05), width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.history_edu, color: Color(0xFFFBBC05)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Unfinished Match Detected',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFFBBC05)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      backgroundColor: const Color(0xFF162E24),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: const BorderSide(color: Color(0xFF1B3D2F), width: 1.5),
+                                      ),
+                                      title: const Text('Delete Saved Match?', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05))),
+                                      content: const Text('Are you sure you want to delete the saved match progress?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            _deleteSavedMatch();
+                                          },
+                                          child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.delete, color: Colors.redAccent, size: 18),
+                                label: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                              ),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFBBC05),
+                                  foregroundColor: const Color(0xFF0B1C15),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  elevation: 2,
+                                ),
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('RESUME MATCH', style: TextStyle(fontWeight: FontWeight.bold)),
+                                onPressed: () async {
+                                  final loaded = await _loadGameState();
+                                  if (loaded) {
+                                    _game.resetVisuals();
+                                    _game.syncVisualsToEngine();
+                                    setState(() {
+                                      _isGameStarted = true;
+                                      _isRolling = false;
+                                    });
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   
                   // Player Count card
                   Container(

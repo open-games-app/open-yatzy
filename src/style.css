@@ -752,3 +752,43 @@ canvas {
     font-size: 10px;
   }
 }
+
+/* Rules Guide Styles */
+.rules-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  color: var(--color-text-primary);
+}
+
+.rules-table th {
+  border-bottom: 1.5px solid var(--color-border);
+  padding: 8px 4px;
+  font-weight: 700;
+  color: var(--color-accent-gold);
+}
+
+.rules-table td {
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.light-theme .rules-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+#rules-modal .modal-content {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+#rules-modal .modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#rules-modal .modal-content::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}
+
