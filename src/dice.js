@@ -80,7 +80,7 @@ export class DiceComponent {
     ctx.shadowBlur = 10;
     ctx.shadowOffsetX = 4;
     ctx.shadowOffsetY = 8;
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#0b0f19';
     ctx.beginPath();
     ctx.roundRect(-hs, -hs, this.size, this.size, 16);
     ctx.fill();
@@ -89,9 +89,9 @@ export class DiceComponent {
     // 2. Gold Glow outline when held
     if (this.held) {
       ctx.save();
-      ctx.shadowColor = 'rgba(250, 204, 21, 0.6)';
+      ctx.shadowColor = 'rgba(251, 188, 5, 0.8)';
       ctx.shadowBlur = 12;
-      ctx.strokeStyle = '#facc15';
+      ctx.strokeStyle = '#fbbc05';
       ctx.lineWidth = 3.0;
       ctx.beginPath();
       ctx.roundRect(-hs, -hs, this.size, this.size, 16);
@@ -99,18 +99,28 @@ export class DiceComponent {
       ctx.restore();
     }
 
-    // 3. Body (gradient)
+    // 3. Body (multi-color gradient based on index)
+    const colors = [
+      { start: '#4285F4', end: '#1D5ABF' }, // Index 0: Google Blue
+      { start: '#EA4335', end: '#B32015' }, // Index 1: Google Red
+      { start: '#FBBC05', end: '#C99200' }, // Index 2: Google Yellow
+      { start: '#34A853', end: '#227336' }, // Index 3: Google Green
+      { start: '#8B5CF6', end: '#6333C7' }  // Index 4: Google Violet/Purple
+    ];
+    
+    const pair = colors[this.index % colors.length];
     const grad = ctx.createLinearGradient(-hs, -hs, hs, hs);
-    grad.addColorStop(0, '#1e293b');
-    grad.addColorStop(1, '#0f172a');
+    grad.addColorStop(0, pair.start);
+    grad.addColorStop(1, pair.end);
+    
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.roundRect(-hs, -hs, this.size, this.size, 16);
     ctx.fill();
 
-    // 4. Border stroke if not held (subtle slate border)
+    // 4. Border stroke if not held
     if (!this.held) {
-      ctx.strokeStyle = '#475569';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.roundRect(-hs, -hs, this.size, this.size, 16);
@@ -118,7 +128,6 @@ export class DiceComponent {
     }
 
     // 5. Draw Pips
-    ctx.fillStyle = '#ffffff';
     this._drawPips(ctx, this.visualValue, this.size);
 
     ctx.restore();
@@ -130,9 +139,9 @@ export class DiceComponent {
 
     function drawPip(x, y) {
       // 3D depth shadow under pip
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.beginPath();
-      ctx.arc(x, y + 1, radius, 0, Math.PI * 2);
+      ctx.arc(x, y + 1.5, radius, 0, Math.PI * 2);
       ctx.fill();
 
       // Main pip

@@ -19,12 +19,12 @@ class OpenYatzyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        scaffoldBackgroundColor: const Color(0xFF0B0F19),
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6366F1), // Indigo
-          secondary: Color(0xFFFACC15), // Gold
-          surface: Color(0xFF1E293B), // Slate Slate-800
-          background: const Color(0xFF0F172A),
+          primary: Color(0xFF4285F4), // Google Blue
+          secondary: Color(0xFFFBBC05), // Google Yellow
+          surface: Color(0xFF1E293B), // Slate Surface
+          background: const Color(0xFF0B0F19),
         ),
         fontFamily: 'Roboto',
       ),
@@ -266,7 +266,7 @@ class _GameScreenState extends State<GameScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: const Color(0xFF0B0F19),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.grey),
@@ -386,12 +386,12 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
+                        backgroundColor: const Color(0xFF4285F4),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: Color(0xFF818CF8), width: 1.5),
+                          side: const BorderSide(color: Color(0xFF669DF6), width: 1.5),
                         ),
                         elevation: 4,
                       ),
@@ -437,6 +437,30 @@ class _GameScreenState extends State<GameScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4285F4).withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          )
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          height: 120,
+                          width: 120,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
                   const Text(
                     'OPEN-YATZY',
                     style: TextStyle(
@@ -449,7 +473,7 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Local Multiplayer Pass & Play',
+                    'Open-Gaming Local Pass & Play',
                     style: TextStyle(color: Colors.grey, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
@@ -485,10 +509,10 @@ class _GameScreenState extends State<GameScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: selected ? const Color(0xFF6366F1) : const Color(0xFF0F172A),
+                                  color: selected ? const Color(0xFF4285F4) : const Color(0xFF0F172A),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: selected ? const Color(0xFF818CF8) : const Color(0xFF334155),
+                                    color: selected ? const Color(0xFF669DF6) : const Color(0xFF334155),
                                     width: 1.5,
                                   ),
                                 ),
@@ -540,7 +564,7 @@ class _GameScreenState extends State<GameScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Color(0xFF6366F1)),
+                                  borderSide: const BorderSide(color: Color(0xFF4285F4)),
                                 ),
                               ),
                             ),
@@ -554,7 +578,7 @@ class _GameScreenState extends State<GameScreen> {
                   // Start Match Button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1),
+                      backgroundColor: const Color(0xFF4285F4),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 4,
@@ -614,15 +638,15 @@ class _GameScreenState extends State<GameScreen> {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF6366F1).withOpacity(0.3) : Colors.transparent,
+              color: isActive ? const Color(0xFF4285F4).withOpacity(0.3) : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
-              border: isActive ? Border.all(color: const Color(0xFFFACC15), width: 1.5) : null,
+              border: isActive ? Border.all(color: const Color(0xFFFBBC05), width: 1.5) : null,
             ),
             child: Text(
               name,
               style: TextStyle(
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                color: isActive ? const Color(0xFFFACC15) : Colors.grey,
+                color: isActive ? const Color(0xFFFBBC05) : Colors.grey,
                 fontSize: 11,
               ),
               textAlign: TextAlign.center,

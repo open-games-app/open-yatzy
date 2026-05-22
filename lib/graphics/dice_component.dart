@@ -106,19 +106,28 @@ class DiceComponent extends PositionComponent with TapCallbacks {
     // 2. Gold Glow outline when held
     if (held) {
       final glowPaint = Paint()
-        ..color = const Color(0xFFFACC15).withOpacity(0.4)
+        ..color = const Color(0xFFFBBC05).withOpacity(0.5)
         ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 12);
       canvas.drawRRect(rrect, glowPaint);
     }
 
-    // 3. Die Body (Deep dark slate/blue gradient face)
+    // 3. Die Body (multi-color gradient based on index)
+    final List<Map<String, Color>> colors = [
+      { 'start': const Color(0xFF4285F4), 'end': const Color(0xFF1D5ABF) }, // Index 0: Google Blue
+      { 'start': const Color(0xFFEA4335), 'end': const Color(0xFFB32015) }, // Index 1: Google Red
+      { 'start': const Color(0xFFFBBC05), 'end': const Color(0xFFC99200) }, // Index 2: Google Yellow
+      { 'start': const Color(0xFF34A853), 'end': const Color(0xFF227336) }, // Index 3: Google Green
+      { 'start': const Color(0xFF8B5CF6), 'end': const Color(0xFF6333C7) }, // Index 4: Google Purple
+    ];
+    final pair = colors[index % colors.length];
+
     final bodyPaint = Paint()
       ..shader = ui.Gradient.linear(
         Offset(-size.x / 2, -size.y / 2),
         Offset(size.x / 2, size.y / 2),
         [
-          const Color(0xFF1E293B), // lighter slate
-          const Color(0xFF0F172A), // darker deep slate
+          pair['start']!,
+          pair['end']!,
         ],
       );
     canvas.drawRRect(rrect, bodyPaint);
@@ -127,7 +136,7 @@ class DiceComponent extends PositionComponent with TapCallbacks {
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = held ? 3.0 : 1.5
-      ..color = held ? const Color(0xFFFACC15) : const Color(0xFF475569);
+      ..color = held ? const Color(0xFFFBBC05) : Colors.white.withOpacity(0.25);
     canvas.drawRRect(rrect, borderPaint);
 
     // 5. Draw Pips (White dots with a tiny inner depth)

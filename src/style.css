@@ -1,13 +1,13 @@
-/* Premium Deep-Space Theme Settings */
+/* Premium Google RGB Theme Settings */
 :root {
-  --color-bg: #0F172A;
+  --color-bg: #0B0F19;
   --color-surface: #1E293B;
   --color-border: #334155;
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #94A3B8;
-  --color-accent-gold: #FACC15;
-  --color-accent-indigo: #6366F1;
-  --color-accent-indigo-hover: #4F46E5;
+  --color-accent-gold: #FBBC05;
+  --color-accent-indigo: #4285F4;
+  --color-accent-indigo-hover: #3367D6;
 }
 
 * {
