@@ -149,8 +149,7 @@ function init() {
 
   // Bind main window events
   window.addEventListener('resize', onResize);
-  canvas.addEventListener('mousedown', onCanvasClick);
-  canvas.addEventListener('touchstart', onCanvasTouch, { passive: true });
+  canvas.addEventListener('pointerdown', onCanvasPointerDown);
 
   // Bind controls
   btnRoll.addEventListener('click', rollDice);
@@ -398,24 +397,10 @@ function onResize() {
 }
 
 // Input routing
-function getCanvasMouseCoords(e) {
+function onCanvasPointerDown(e) {
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
-  return { mx, my };
-}
-
-function onCanvasClick(e) {
-  const { mx, my } = getCanvasMouseCoords(e);
-  handleTap(mx, my);
-}
-
-function onCanvasTouch(e) {
-  if (e.touches.length === 0) return;
-  const touch = e.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const mx = touch.clientX - rect.left;
-  const my = touch.clientY - rect.top;
   handleTap(mx, my);
 }
 

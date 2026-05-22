@@ -601,7 +601,7 @@ class _GameScreenState extends State<GameScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B1C15),
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.grey),
           onPressed: () {
