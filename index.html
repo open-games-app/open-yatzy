@@ -43,11 +43,9 @@
         </div>
 
         <img src="assets/images/logo.png" alt="YATZY! Logo" style="width: 120px; height: 120px; border-radius: 24px; margin: 0 auto 16px auto; display: block; box-shadow: 0 0 25px rgba(251, 188, 5, 0.4); border: 2px solid var(--color-accent-gold);">
-        <h1 style="font-size: 36px; font-weight: 900; letter-spacing: 2px; text-align: center; color: var(--color-accent-gold); margin-bottom: 4px;">YATZY!</h1>
-        <p style="color: var(--color-text-primary); text-align: center; font-size: 15px; font-weight: 600; margin-top: 0; margin-bottom: 6px;">Play Local Multiplayer Without Ads</p>
-        <p style="color: var(--color-text-secondary); text-align: center; font-size: 12px; max-width: 320px; margin: 0 auto 12px auto; line-height: 1.4;">
-          open-games.app is the parent name who builds open-source games without ads. Play now free!
-        </p>
+        <h1 style="font-size: 36px; font-weight: 900; letter-spacing: 2px; text-align: center; color: var(--color-accent-gold); margin-bottom: 2px;">YATZY!</h1>
+        <div style="color: var(--color-text-secondary); text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; margin-bottom: 12px; text-transform: lowercase; opacity: 0.8;">by open-games.app</div>
+        <p style="color: var(--color-text-primary); text-align: center; font-size: 16px; font-weight: 700; margin-top: 0; margin-bottom: 16px; letter-spacing: 0.5px;">The Ultimate Face-to-Face Dice Duel</p>
 
         <div style="margin-top: 10px;">
           <h2>PLAYER NAMES</h2>
@@ -94,9 +92,7 @@
             <button id="btn-reset" class="btn-header" title="Reset Game">
               <span class="material-symbols-outlined">refresh</span>
             </button>
-            <button id="btn-login" class="btn-header" title="Login">
-              <span class="material-symbols-outlined">login</span>
-            </button>
+
             <span id="user-display" style="display:none; font-size: 13px; font-weight: bold; color: var(--color-accent-gold);"></span>
             <button id="btn-leaderboard" class="btn-header" title="Leaderboard">
               <span class="material-symbols-outlined">leaderboard</span>
@@ -148,11 +144,11 @@
     </div>
     <div class="drawer-filter-container" style="padding: 12px 16px; border-bottom: 1.5px solid var(--color-border); display: flex; flex-direction: column; gap: 8px; background-color: var(--color-surface);">
       <input type="text" id="filter-player-name" class="input-field" placeholder="Filter by player name..." style="padding: 8px 12px; font-size: 13px; width: 100%;">
-      <div id="filter-stats" style="display: none; font-size: 12px; font-weight: bold; color: var(--color-accent-gold); justify-content: space-around; padding: 4px 0; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 4px;">
-        <span>WINS: <span id="stats-wins" style="color: #2ecc71;">0</span></span>
-        <span>LOSSES: <span id="stats-losses" style="color: #e74c3c;">0</span></span>
-        <span>DRAWS: <span id="stats-draws" style="color: #f1c40f;">0</span></span>
-      </div>
+      <div id="filter-stats" style="display: none; font-size: 12px; font-weight: bold; color: #475569; justify-content: space-around; padding: 6px 0; border-top: 1px dashed #E2E8F0; margin-top: 4px;">
+      <span>WINS: <span id="stats-wins" style="color: #16A34A;">0</span></span>
+      <span>LOSSES: <span id="stats-losses" style="color: #DC2626;">0</span></span>
+      <span>DRAWS: <span id="stats-draws" style="color: #D97706;">0</span></span>
+    </div>
     </div>
     <div id="leaderboard-list" class="leaderboard-list">
       <!-- Populated dynamically -->
@@ -266,6 +262,22 @@
       <button id="btn-close-rules-bottom" class="btn-roll" style="width: 100%; margin-top: 15px; justify-content: center;">
         Got it, let's play!
       </button>
+    </div>
+  </div>
+
+  <!-- Custom Dialog Modal (Alert/Confirm replacement) -->
+  <div id="custom-dialog-modal" class="modal-overlay">
+    <div class="modal-content" style="position: relative; max-width: 400px; padding: 28px; border: 1.5px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <button id="custom-dialog-close" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; color: #94A3B8; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%;">
+        <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+      </button>
+      <div id="custom-dialog-icon" style="font-size: 44px; margin-bottom: 4px; text-align: center;">⚠️</div>
+      <div id="custom-dialog-title" class="modal-title" style="font-size: 20px; font-weight: 900; text-align: center; color: var(--color-accent-gold); margin-bottom: 8px;">Alert</div>
+      <div id="custom-dialog-message" style="color: var(--color-text-primary); font-size: 14px; text-align: center; margin-bottom: 24px; line-height: 1.5; font-weight: 500;">Message body</div>
+      <div id="custom-dialog-actions" style="display: flex; gap: 12px; justify-content: center; width: 100%;">
+        <button id="custom-dialog-yes" class="btn-roll" style="background: #EF5350 !important; color: white !important; border: 1.5px solid #EF5350 !important; border-radius: 12px; padding: 10px 24px; font-weight: bold; cursor: pointer; flex: 1; justify-content: center; box-shadow: none;">Yes</button>
+        <button id="custom-dialog-no" class="btn-roll" style="background: white !important; color: #1E293B !important; border: 1.5px solid #CBD5E1 !important; border-radius: 12px; padding: 10px 24px; font-weight: bold; cursor: pointer; flex: 1; justify-content: center; box-shadow: none;">No</button>
+      </div>
     </div>
   </div>
 

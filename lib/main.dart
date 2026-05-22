@@ -764,11 +764,12 @@ class _GameScreenState extends State<GameScreen> {
     }
 
     return Scaffold(
+      backgroundColor: _engine.activePlayerIndex == 1 ? const Color(0xFFF7B4B2) : const Color(0xFF7BB4D9),
       endDrawer: _buildLeaderboardDrawer(),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 36.0, vertical: 8.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -910,20 +911,27 @@ class _GameScreenState extends State<GameScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: verticalSpacing * 0.3),
-                        const Text(
-                          'Play Local Multiplayer Without Ads',
-                          style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                        Text(
+                          'by open-games.app',
+                          style: TextStyle(
+                            color: const Color(0xFFA0A5B5),
+                            fontSize: screenHeight < 680 ? 11 : 12,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1.5,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        if (showFullSubtitles) ...[
-                          const SizedBox(height: 4),
-                          const Text(
-                            'open-games.app is the parent name who builds open-source games without ads. Play Now Free!',
-                            style: TextStyle(color: Color(0xFFA0A5B5), fontSize: 11),
-                            textAlign: TextAlign.center,
+                        SizedBox(height: verticalSpacing * 0.4),
+                        Text(
+                          'The Ultimate Face-to-Face Dice Duel',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenHeight < 680 ? 13 : 15,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
                           ),
-                        ],
+                          textAlign: TextAlign.center,
+                        ),
                         SizedBox(height: verticalSpacing),
                         
                         if (_hasSavedGame) ...[
@@ -1058,31 +1066,57 @@ class _GameScreenState extends State<GameScreen> {
                         SizedBox(height: verticalSpacing),
 
                         // Start Match Button
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFBBC05),
-                            foregroundColor: const Color(0xFF323846),
-                            padding: EdgeInsets.symmetric(vertical: screenHeight < 680 ? 10 : 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenHeight < 680 ? 12 : 16)),
-                            elevation: 4,
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(screenHeight < 680 ? 12 : 16),
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFFD700), // Light gold
+                                Color(0xFFFBBC05), // Medium gold
+                                Color(0xFFD4AF37), // Dark gold
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFBBC05).withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
                           ),
-                          onPressed: () {
-                            final List<String> names = [];
-                            for (int i = 0; i < 2; i++) {
-                              final val = _nameControllers[i].text.trim();
-                              names.add(val.isNotEmpty ? val : 'Player ${i + 1}');
-                            }
-                            
-                            _engine.setupPlayers(2, names);
-                            _game.resetVisuals();
-                            setState(() {
-                              _isGameStarted = true;
-                              _isRolling = false;
-                            });
-                          },
-                          child: Text(
-                            'START MATCH',
-                            style: TextStyle(fontSize: screenHeight < 680 ? 13 : 15, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: const Color(0xFF0B1C15), // Deep dark green text for premium look
+                              padding: EdgeInsets.symmetric(vertical: screenHeight < 680 ? 10 : 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenHeight < 680 ? 12 : 16)),
+                            ),
+                            onPressed: () {
+                              final List<String> names = [];
+                              for (int i = 0; i < 2; i++) {
+                                final val = _nameControllers[i].text.trim();
+                                names.add(val.isNotEmpty ? val : 'Player ${i + 1}');
+                              }
+                              
+                              _engine.setupPlayers(2, names);
+                              _game.resetVisuals();
+                              setState(() {
+                                _isGameStarted = true;
+                                _isRolling = false;
+                              });
+                            },
+                            child: Text(
+                              'START MATCH',
+                              style: TextStyle(
+                                fontSize: screenHeight < 680 ? 13 : 15,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1159,27 +1193,7 @@ class _GameScreenState extends State<GameScreen> {
           icon: Icon(Icons.refresh, color: Colors.grey, size: iconSize),
           onPressed: _resetGame,
         ),
-        if (_social.currentUser == null)
-          IconButton(
-            constraints: constraints,
-            padding: EdgeInsets.zero,
-            icon: Icon(Icons.login, color: const Color(0xFFFBBC05), size: iconSize),
-            onPressed: _loginSocial,
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: Center(
-              child: Text(
-                _social.currentUser!.displayName.split(' ')[0],
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: _cellHeight < 28 ? 9 : 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
+
         IconButton(
           constraints: constraints,
           padding: EdgeInsets.zero,
@@ -1700,21 +1714,26 @@ class _GameScreenState extends State<GameScreen> {
 
   Widget _buildLeaderboardDrawer() {
     return Drawer(
-      backgroundColor: const Color(0xFF202430),
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              color: const Color(0xFF323846),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                ),
+              ),
               child: const Row(
                 children: [
-                  Icon(Icons.history, color: Color(0xFFFBBC05), size: 28),
+                  Icon(Icons.history, color: Color(0xFF0F172A), size: 28),
                   SizedBox(width: 12),
                   Text(
                     'MATCH HISTORY',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Color(0xFFFBBC05)),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Color(0xFF0F172A)),
                   ),
                 ],
               ),
@@ -1723,13 +1742,13 @@ class _GameScreenState extends State<GameScreen> {
               padding: const EdgeInsets.all(12.0),
               child: TextField(
                 controller: _filterNameController,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Filter by player name...',
-                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFFBBC05), size: 20),
+                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B), size: 20),
                   filled: true,
-                  fillColor: const Color(0xFF323846),
+                  fillColor: const Color(0xFFF1F5F9),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -1737,7 +1756,7 @@ class _GameScreenState extends State<GameScreen> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                   suffixIcon: _filterNameController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                          icon: const Icon(Icons.clear, color: Color(0xFF64748B), size: 18),
                           onPressed: () {
                             setState(() {
                               _filterNameController.clear();
@@ -1754,16 +1773,16 @@ class _GameScreenState extends State<GameScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF162E24),
+                    color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF1B3D2F), width: 1),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildStatColumn('WINS', _filterWins, const Color(0xFF2196F3)),
                       _buildStatColumn('LOSSES', _filterLosses, const Color(0xFFEF5350)),
-                      _buildStatColumn('DRAWS', _filterDraws, const Color(0xFFFBBC05)),
+                      _buildStatColumn('DRAWS', _filterDraws, const Color(0xFFD97706)),
                     ],
                   ),
                 ),
@@ -1773,7 +1792,7 @@ class _GameScreenState extends State<GameScreen> {
                   ? const Center(
                       child: Text(
                         'No matches found.',
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                       ),
                     )
                   : ListView.builder(
@@ -1808,8 +1827,16 @@ class _GameScreenState extends State<GameScreen> {
                           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF323846),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1818,7 +1845,7 @@ class _GameScreenState extends State<GameScreen> {
                                 matchText,
                                 style: const TextStyle(
                                   fontSize: 13,
-                                  color: Colors.white,
+                                  color: Color(0xFF0F172A),
                                   height: 1.4,
                                 ),
                               ),
@@ -1827,7 +1854,7 @@ class _GameScreenState extends State<GameScreen> {
                                 dateStr,
                                 style: const TextStyle(
                                   fontSize: 10,
-                                  color: Colors.grey,
+                                  color: Color(0xFF64748B),
                                 ),
                                 textAlign: TextAlign.right,
                               ),

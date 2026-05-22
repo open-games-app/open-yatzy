@@ -119,12 +119,20 @@ function init() {
   const tabExit = document.getElementById('tab-exit');
   if (tabExit) {
     tabExit.addEventListener('click', () => {
-      if (confirm("Are you sure you want to exit the current match? Your progress will be saved.")) {
-        saveGameState();
-        document.getElementById('game-screen').style.display = 'none';
-        document.getElementById('setup-screen').style.display = 'flex';
-        document.body.classList.add('setup-active');
-      }
+      showCustomDialog({
+        title: 'Exit Match?',
+        message: 'Are you sure you want to exit the current match? Your progress will be saved.',
+        icon: '🚪',
+        showCancel: true,
+        yesText: 'Exit',
+        noText: 'Cancel',
+        onConfirm: () => {
+          saveGameState();
+          document.getElementById('game-screen').style.display = 'none';
+          document.getElementById('setup-screen').style.display = 'flex';
+          document.body.classList.add('setup-active');
+        }
+      });
     });
   }
 
@@ -147,7 +155,7 @@ function init() {
   // Bind controls
   btnRoll.addEventListener('click', rollDice);
   btnReset.addEventListener('click', resetGame);
-  btnLogin.addEventListener('click', loginSocial);
+  if (btnLogin) btnLogin.addEventListener('click', loginSocial);
   btnLeaderboard.addEventListener('click', openLeaderboard);
   drawerClose.addEventListener('click', closeLeaderboard);
 
@@ -467,7 +475,13 @@ function rollDice() {
 
 function selectCategory(category) {
   if (engine.rollsRemaining === 3) {
-    alert('Roll the dice first before choosing a category!');
+    showCustomDialog({
+      title: 'Roll First!',
+      message: 'Roll the dice first before choosing a category!',
+      icon: '🎲',
+      showCancel: false,
+      yesText: 'Got it'
+    });
     return;
   }
   if (isDiceRolling) {
@@ -523,24 +537,32 @@ function selectCategory(category) {
 }
 
 function resetGame() {
-  if (confirm("Are you sure you want to reset the current match? Your progress will be lost.")) {
-    engine.resetGame();
-    localStorage.removeItem('saved_yatzy_match');
-    const resumeSection = document.getElementById('resume-section');
-    if (resumeSection) resumeSection.style.display = 'none';
+  showCustomDialog({
+    title: 'Reset Match?',
+    message: 'Are you sure you want to reset the current match? Your progress will be lost.',
+    icon: '🔄',
+    showCancel: true,
+    yesText: 'Reset',
+    noText: 'Cancel',
+    onConfirm: () => {
+      engine.resetGame();
+      localStorage.removeItem('saved_yatzy_match');
+      const resumeSection = document.getElementById('resume-section');
+      if (resumeSection) resumeSection.style.display = 'none';
 
-    // Clear visual die holds
-    diceComponents.forEach(die => {
-      die.held = false;
-      die.visualValue = 1;
-      die.targetValue = 1;
-      die.angle = 0;
-      die.scaleFactor = 1.0;
-    });
+      // Clear visual die holds
+      diceComponents.forEach(die => {
+        die.held = false;
+        die.visualValue = 1;
+        die.targetValue = 1;
+        die.angle = 0;
+        die.scaleFactor = 1.0;
+      });
 
-    modal.classList.remove('open');
-    updateUI();
-  }
+      modal.classList.remove('open');
+      updateUI();
+    }
+  });
 }
 
 function showHandoffModal(playerName) {
@@ -626,6 +648,13 @@ function updateUI() {
   const activeColor = activeIdx === 0 ? 'var(--color-accent-indigo)' : 'var(--color-accent-secondary)';
   btnRoll.style.background = activeColor;
   btnRoll.style.borderColor = 'var(--color-accent-gold)';
+
+  // Toggle p2-turn class for Player 2 turn background
+  if (activeIdx === 1) {
+    document.body.classList.add('p2-turn');
+  } else {
+    document.body.classList.remove('p2-turn');
+  }
 
   // Rotate game board card for Player 2
   const boardCard = document.getElementById('game-board-card');
@@ -783,11 +812,11 @@ function getCategorySymbol(cat) {
 // Social Platform Sync
 function updateSocialHeader() {
   if (social.currentUser) {
-    btnLogin.style.display = 'none';
+    if (btnLogin) btnLogin.style.display = 'none';
     userDisplay.style.display = 'inline';
     userDisplay.innerText = social.currentUser.displayName;
   } else {
-    btnLogin.style.display = 'inline';
+    if (btnLogin) btnLogin.style.display = 'inline';
     userDisplay.style.display = 'none';
   }
 }
@@ -877,7 +906,7 @@ function refreshLeaderboard() {
   if (filteredHistory.length === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.style.textAlign = 'center';
-    emptyMsg.style.color = 'var(--color-text-secondary)';
+    emptyMsg.style.color = '#64748b';
     emptyMsg.style.padding = '30px 16px';
     emptyMsg.style.fontSize = '14px';
     emptyMsg.innerText = 'No matches found.';
@@ -892,7 +921,7 @@ function refreshLeaderboard() {
     item.style.alignItems = 'stretch';
     item.style.gap = '4px';
     item.style.padding = '12px';
-    item.style.borderBottom = '1px solid var(--color-border)';
+    item.style.borderBottom = '1px solid #E2E8F0';
 
     let text = '';
     if (match.winner === 'Draw') {
@@ -906,8 +935,8 @@ function refreshLeaderboard() {
       : '';
 
     item.innerHTML = `
-      <div style="font-size: 13px; color: var(--color-text-primary); line-height: 1.4;">${text}</div>
-      <div style="font-size: 10px; color: var(--color-text-secondary); text-align: right; margin-top: 2px;">
+      <div style="font-size: 13px; color: #0F172A; line-height: 1.4;">${text}</div>
+      <div style="font-size: 10px; color: #64748b; text-align: right; margin-top: 2px;">
         ${dateStr}
       </div>
     `;
@@ -941,6 +970,58 @@ function loop(time) {
   }
 
   requestAnimationFrame(loop);
+}
+
+function showCustomDialog({ title, message, icon = '⚠️', showCancel = true, yesText = 'Yes', noText = 'No', onConfirm, onCancel }) {
+  const modal = document.getElementById('custom-dialog-modal');
+  const titleEl = document.getElementById('custom-dialog-title');
+  const msgEl = document.getElementById('custom-dialog-message');
+  const iconEl = document.getElementById('custom-dialog-icon');
+  const btnYes = document.getElementById('custom-dialog-yes');
+  const btnNo = document.getElementById('custom-dialog-no');
+  const btnClose = document.getElementById('custom-dialog-close');
+
+  titleEl.innerText = title;
+  msgEl.innerHTML = message;
+  iconEl.innerText = icon;
+  btnYes.innerText = yesText;
+  btnNo.innerText = noText;
+
+  if (showCancel) {
+    btnNo.style.display = 'block';
+  } else {
+    btnNo.style.display = 'none';
+  }
+
+  // Clear previous listeners
+  const newBtnYes = btnYes.cloneNode(true);
+  const newBtnNo = btnNo.cloneNode(true);
+  const newBtnClose = btnClose.cloneNode(true);
+
+  btnYes.parentNode.replaceChild(newBtnYes, btnYes);
+  btnNo.parentNode.replaceChild(newBtnNo, btnNo);
+  btnClose.parentNode.replaceChild(newBtnClose, btnClose);
+
+  const closeModal = () => {
+    modal.classList.remove('open');
+  };
+
+  newBtnYes.addEventListener('click', () => {
+    closeModal();
+    if (onConfirm) onConfirm();
+  });
+
+  newBtnNo.addEventListener('click', () => {
+    closeModal();
+    if (onCancel) onCancel();
+  });
+
+  newBtnClose.addEventListener('click', () => {
+    closeModal();
+    if (onCancel) onCancel();
+  });
+
+  modal.classList.add('open');
 }
 
 // Launch application

@@ -1110,5 +1110,80 @@ body.setup-active #btn-resume {
   color: var(--color-accent-gold) !important;
 }
 
+/* 1. Player 2 Turn Background color */
+body.p2-turn {
+  background-color: #F7B4B2 !important;
+  background-image: linear-gradient(135deg, #fad0ce 0%, #F7B4B2 100%) !important;
+}
+
+/* 2. Side Score Tabs Mobile Cut-off Prevention */
+body:not(.setup-active) .app-container {
+  padding-left: 36px !important;
+  padding-right: 36px !important;
+}
+
+/* 3. White Match History Drawer with Black Text */
+#leaderboard-drawer {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}
+#leaderboard-drawer .drawer-header {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-bottom: 1.5px solid #E2E8F0 !important;
+}
+#leaderboard-drawer .drawer-header span {
+  color: #0F172A !important;
+}
+#leaderboard-drawer .drawer-close {
+  color: #64748B !important;
+}
+#leaderboard-drawer .drawer-filter-container {
+  background-color: #F8FAFC !important;
+  border-bottom: 1.5px solid #E2E8F0 !important;
+}
+#leaderboard-drawer #filter-player-name {
+  background-color: #FFFFFF !important;
+  border: 1.5px solid #CBD5E1 !important;
+  color: #0F172A !important;
+}
+#leaderboard-drawer #filter-player-name::placeholder {
+  color: #94A3B8 !important;
+}
+#leaderboard-drawer #filter-stats {
+  border-top: 1px dashed #E2E8F0 !important;
+  color: #334155 !important;
+}
+#leaderboard-drawer .leaderboard-list {
+  background-color: #FFFFFF !important;
+}
+#leaderboard-drawer .leaderboard-item {
+  background-color: #FFFFFF !important;
+  border-bottom: 1.5px solid #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+/* 4. Golden Start Match Button for setup screen */
+body.setup-active #btn-start {
+  background: linear-gradient(135deg, #FFD700 0%, #FBBC05 50%, #D4AF37 100%) !important;
+  border: 2.5px solid #FFFFFF !important;
+  color: #0B1C15 !important;
+  font-weight: 900 !important;
+  font-size: 16px !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(251, 188, 5, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+body.setup-active #btn-start:hover {
+  background: linear-gradient(135deg, #FFE033 0%, #FDC82F 50%, #E5BE46 100%) !important;
+  box-shadow: 0 6px 20px rgba(251, 188, 5, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-2px);
+}
+body.setup-active #btn-start:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(251, 188, 5, 0.3) !important;
+}
+
+
 
 
