@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open-Yatzy</title>
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <!-- Facebook Instant Games SDK -->
+  <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
+
+  <link rel="stylesheet" href="/src/style.css">
+  
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="setup-screen">
+      <div class="setup-card">
+        <h1 style="font-size: 32px; font-weight: 900; letter-spacing: 4px; text-align: center; color: white;">OPEN-YATZY</h1>
+        <p style="color: var(--color-text-secondary); text-align: center; margin-top: -16px; font-size: 14px;">Local Multiplayer Pass & Play</p>
+        
+        <div style="margin-top: 10px;">
+          <h2>NUMBER OF PLAYERS</h2>
+          <div class="player-count-buttons" style="margin-top: 10px;">
+            <button class="btn-count active" data-count="1">1</button>
+            <button class="btn-count" data-count="2">2</button>
+            <button class="btn-count" data-count="3">3</button>
+            <button class="btn-count" data-count="4">4</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <h2>PLAYER NAMES</h2>
+          <div id="player-names-container" class="name-input-group" style="margin-top: 10px;">
+            <input type="text" class="input-field" id="input-p1" value="Player 1" placeholder="Player 1 Name">
+          </div>
+        </div>
+
+        <button id="btn-start" class="btn-roll" style="width: 100%; justify-content: center; margin-top: 10px;">
+          START MATCH
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="game-screen" style="display: none;">
+      <!-- Header -->
+      <header>
+        <button id="btn-back" class="btn-header" title="Back to Menu" style="margin-right: auto; display: inline-flex;">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 style="flex-grow: 1; text-align: center; margin-right: 40px; font-size: 20px;">OPEN-YATZY</h1>
+        <div class="header-buttons">
+          <button id="btn-reset" class="btn-header" title="Reset Game">
+            <span class="material-symbols-outlined">refresh</span>
+          </button>
+          <button id="btn-login" class="btn-header" title="Login">
+            <span class="material-symbols-outlined">login</span>
+          </button>
+          <span id="user-display" style="display:none; font-size: 13px; font-weight: bold; color: var(--color-accent-gold);"></span>
+          <button id="btn-leaderboard" class="btn-header" title="Leaderboard">
+            <span class="material-symbols-outlined">leaderboard</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Active Turn Indicator -->
+      <div id="turn-strip" class="turn-strip">
+        <span class="material-symbols-outlined">person</span>
+        <span id="active-player-name">TURN: PLAYER 1</span>
+      </div>
+
+      <!-- Canvas Dice Arena -->
+      <div class="canvas-container">
+        <canvas id="game-canvas"></canvas>
+      </div>
+
+      <!-- Play Turn Status & Roll Button -->
+      <div class="control-bar">
+        <div class="status-info">
+          <span id="rolls-remaining" class="status-rolls">ROLLS REMAINING: 3/3</span>
+          <span id="status-desc" class="status-desc">Roll dice to begin!</span>
+        </div>
+        <button id="btn-roll" class="btn-roll">
+          <span class="material-symbols-outlined">casino</span>
+          ROLL DICE
+        </button>
+      </div>
+
+      <!-- Scorecard Table Wrapper -->
+      <div class="scorecard-section">
+        <div id="scorecard-table-container">
+          <!-- Dynamic Scorecard Table will be injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Drawer -->
+  <div id="leaderboard-drawer" class="drawer">
+    <div class="drawer-header">
+      <span class="material-symbols-outlined">emoji_events</span>
+      LEADERBOARD
+      <button id="drawer-close" class="drawer-close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div id="leaderboard-list" class="leaderboard-list">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="gameover-modal" class="modal-overlay">
+    <div class="modal-content">
+      <!-- Content populated dynamically -->
+    </div>
+  </div>
+
+  <!-- Pass the Device Handoff Modal -->
+  <div id="handoff-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-title">🔄 Turn Completed</div>
+      <div style="color: var(--color-text-secondary); font-size: 16px; margin-top: 10px;">
+        Pass the device to:
+      </div>
+      <div id="handoff-player-name" style="font-size: 24px; font-weight: 900; color: var(--color-accent-gold); margin: 15px 0;">
+        Player 2
+      </div>
+      <button id="btn-handoff-confirm" class="btn-roll" style="width: auto;">
+        I am ready!
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

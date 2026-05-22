@@ -1,0 +1,29 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# Flutter/Dart build and tool files
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Compiled production builds
+dist/
+out/
+build-web/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
