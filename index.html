@@ -140,11 +140,19 @@
   <!-- Leaderboard Drawer -->
   <div id="leaderboard-drawer" class="drawer">
     <div class="drawer-header">
-      <span class="material-symbols-outlined">emoji_events</span>
-      LEADERBOARD
+      <span class="material-symbols-outlined">history</span>
+      MATCH HISTORY
       <button id="drawer-close" class="drawer-close">
         <span class="material-symbols-outlined">close</span>
       </button>
+    </div>
+    <div class="drawer-filter-container" style="padding: 12px 16px; border-bottom: 1.5px solid var(--color-border); display: flex; flex-direction: column; gap: 8px; background-color: var(--color-surface);">
+      <input type="text" id="filter-player-name" class="input-field" placeholder="Filter by player name..." style="padding: 8px 12px; font-size: 13px; width: 100%;">
+      <div id="filter-stats" style="display: none; font-size: 12px; font-weight: bold; color: var(--color-accent-gold); justify-content: space-around; padding: 4px 0; border-top: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 4px;">
+        <span>WINS: <span id="stats-wins" style="color: #2ecc71;">0</span></span>
+        <span>LOSSES: <span id="stats-losses" style="color: #e74c3c;">0</span></span>
+        <span>DRAWS: <span id="stats-draws" style="color: #f1c40f;">0</span></span>
+      </div>
     </div>
     <div id="leaderboard-list" class="leaderboard-list">
       <!-- Populated dynamically -->

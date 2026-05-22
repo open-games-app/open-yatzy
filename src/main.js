@@ -123,6 +123,7 @@ function init() {
         saveGameState();
         document.getElementById('game-screen').style.display = 'none';
         document.getElementById('setup-screen').style.display = 'flex';
+        document.body.classList.add('setup-active');
       }
     });
   }
@@ -154,6 +155,7 @@ function init() {
   document.getElementById('btn-back').addEventListener('click', () => {
     document.getElementById('game-screen').style.display = 'none';
     document.getElementById('setup-screen').style.display = 'flex';
+    document.body.classList.add('setup-active');
   });
 
   // Start match
@@ -172,6 +174,7 @@ function init() {
     // Swap views
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('game-screen').style.display = 'flex';
+    document.body.classList.remove('setup-active');
 
     // Refresh layout and sizes
     resizeCanvas();
@@ -192,6 +195,7 @@ function init() {
         // Swap views
         document.getElementById('setup-screen').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
+        document.body.classList.remove('setup-active');
         
         // Refresh layout
         resizeCanvas();
@@ -229,10 +233,19 @@ function init() {
   if (btnCloseRulesBottom) btnCloseRulesBottom.addEventListener('click', closeRules);
 
   // Confirm turn handoff
-  document.getElementById('btn-handoff-confirm').addEventListener('click', () => {
-    document.getElementById('handoff-modal').classList.remove('open');
-    updateUI();
-  });
+  const btnHandoffConfirm = document.getElementById('btn-handoff-confirm');
+  if (btnHandoffConfirm) {
+    btnHandoffConfirm.addEventListener('click', () => {
+      document.getElementById('handoff-modal').classList.remove('open');
+      updateUI();
+    });
+  }
+
+  // Filter player name event listener
+  const filterInput = document.getElementById('filter-player-name');
+  if (filterInput) {
+    filterInput.addEventListener('input', refreshLeaderboard);
+  }
 
   // Table category click event delegation
   tableContainer.addEventListener('click', (e) => {
@@ -246,6 +259,7 @@ function init() {
   // Start with Setup screen
   document.getElementById('setup-screen').style.display = 'flex';
   document.getElementById('game-screen').style.display = 'none';
+  document.body.classList.add('setup-active');
 
   // Start animation loop
   requestAnimationFrame(loop);
@@ -268,6 +282,48 @@ function saveGameState() {
     isGameOver: engine.isGameOver
   };
   localStorage.setItem('saved_yatzy_match', JSON.stringify(state));
+}
+
+function saveMatchToHistory(p1, p2, s1, s2) {
+  try {
+    const history = JSON.parse(localStorage.getItem('yatzy_match_history') || '[]');
+    let winner = '';
+    let defeatedOpponent = '';
+    let winnerScore = 0;
+    let margin = 0;
+    
+    if (s1 > s2) {
+      winner = p1;
+      defeatedOpponent = p2;
+      winnerScore = s1;
+      margin = s1 - s2;
+    } else if (s2 > s1) {
+      winner = p2;
+      defeatedOpponent = p1;
+      winnerScore = s2;
+      margin = s2 - s1;
+    } else {
+      winner = 'Draw';
+      winnerScore = s1;
+      margin = 0;
+    }
+
+    history.push({
+      player1: p1,
+      player2: p2,
+      score1: s1,
+      score2: s2,
+      winner: winner,
+      winnerScore: winnerScore,
+      defeatedOpponent: defeatedOpponent,
+      margin: margin,
+      timestamp: Date.now()
+    });
+
+    localStorage.setItem('yatzy_match_history', JSON.stringify(history));
+  } catch (e) {
+    console.error('Failed to save match history:', e);
+  }
 }
 
 function loadGameState() {
@@ -441,6 +497,15 @@ function selectCategory(category) {
 
       audio.playGameOver();
 
+      // Save completed match to local history
+      if (engine.playerCount >= 2) {
+        const p1 = engine.playerNames[0];
+        const p2 = engine.playerNames[1];
+        const s1 = engine.getTotalScore(0);
+        const s2 = engine.getTotalScore(1);
+        saveMatchToHistory(p1, p2, s1, s2);
+      }
+
       let maxScore = 0;
       for (let i = 0; i < engine.playerCount; i++) {
         const score = engine.getTotalScore(i);
@@ -452,12 +517,7 @@ function selectCategory(category) {
       });
     } else {
       saveGameState();
-      if (engine.playerCount > 1) {
-        const nextPlayerName = engine.playerNames[engine.activePlayerIndex];
-        showHandoffModal(nextPlayerName);
-      } else {
-        updateUI();
-      }
+      updateUI();
     }
   }
 }
@@ -539,6 +599,7 @@ function showGameOver() {
     modal.classList.remove('open');
     document.getElementById('game-screen').style.display = 'none';
     document.getElementById('setup-screen').style.display = 'flex';
+    document.body.classList.add('setup-active');
   });
 
   modal.classList.add('open');
@@ -757,25 +818,100 @@ function closeLeaderboard() {
 }
 
 function refreshLeaderboard() {
-  social.getLeaderboard().then(list => {
-    leaderboardList.innerHTML = '';
-    list.forEach(entry => {
-      const item = document.createElement('div');
-      const isTopThree = entry.rank <= 3;
-      item.className = `leaderboard-item ${isTopThree ? 'top-three' : ''}`;
+  const filterInput = document.getElementById('filter-player-name');
+  const filterVal = filterInput ? filterInput.value.trim().toLowerCase() : '';
+  let history = [];
+  try {
+    history = JSON.parse(localStorage.getItem('yatzy_match_history') || '[]');
+  } catch (e) {
+    console.error('Failed to load match history:', e);
+  }
 
-      let rankText = entry.rank;
-      if (entry.rank === 1) rankText = '🥇';
-      else if (entry.rank === 2) rankText = '🥈';
-      else if (entry.rank === 3) rankText = '🥉';
+  // Sort descending by timestamp (newest first)
+  history.sort((a, b) => b.timestamp - a.timestamp);
 
-      item.innerHTML = `
-        <div class="leaderboard-rank">${rankText}</div>
-        <div class="leaderboard-name">${entry.name}</div>
-        <div class="leaderboard-score">${entry.score} pts</div>
-      `;
-      leaderboardList.appendChild(item);
+  const filterStatsDiv = document.getElementById('filter-stats');
+  if (filterVal && filterStatsDiv) {
+    // Calculate stats
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+
+    history.forEach(match => {
+      const p1 = (match.player1 || '').toLowerCase();
+      const p2 = (match.player2 || '').toLowerCase();
+      const winner = (match.winner || '').toLowerCase();
+
+      if (p1.includes(filterVal) || p2.includes(filterVal)) {
+        if (winner === 'draw') {
+          draws++;
+        } else if (winner.includes(filterVal)) {
+          wins++;
+        } else {
+          losses++;
+        }
+      }
     });
+
+    const statsWinsElem = document.getElementById('stats-wins');
+    const statsLossesElem = document.getElementById('stats-losses');
+    const statsDrawsElem = document.getElementById('stats-draws');
+    if (statsWinsElem) statsWinsElem.innerText = wins;
+    if (statsLossesElem) statsLossesElem.innerText = losses;
+    if (statsDrawsElem) statsDrawsElem.innerText = draws;
+    filterStatsDiv.style.display = 'flex';
+  } else if (filterStatsDiv) {
+    filterStatsDiv.style.display = 'none';
+  }
+
+  leaderboardList.innerHTML = '';
+
+  // Filter list
+  const filteredHistory = history.filter(match => {
+    if (!filterVal) return true;
+    const p1 = (match.player1 || '').toLowerCase();
+    const p2 = (match.player2 || '').toLowerCase();
+    return p1.includes(filterVal) || p2.includes(filterVal);
+  });
+
+  if (filteredHistory.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.textAlign = 'center';
+    emptyMsg.style.color = 'var(--color-text-secondary)';
+    emptyMsg.style.padding = '30px 16px';
+    emptyMsg.style.fontSize = '14px';
+    emptyMsg.innerText = 'No matches found.';
+    leaderboardList.appendChild(emptyMsg);
+    return;
+  }
+
+  filteredHistory.forEach(match => {
+    const item = document.createElement('div');
+    item.className = 'leaderboard-item';
+    item.style.flexDirection = 'column';
+    item.style.alignItems = 'stretch';
+    item.style.gap = '4px';
+    item.style.padding = '12px';
+    item.style.borderBottom = '1px solid var(--color-border)';
+
+    let text = '';
+    if (match.winner === 'Draw') {
+      text = `<strong>Draw:</strong> ${match.player1} & ${match.player2} tied at ${match.winnerScore} pts`;
+    } else {
+      text = `🏆 <strong>${match.winner}</strong> won with <strong>${match.winnerScore} pts</strong>, defeating ${match.defeatedOpponent} by <strong>${match.margin} pts</strong>`;
+    }
+
+    const dateStr = match.timestamp 
+      ? new Date(match.timestamp).toLocaleDateString() + ' ' + new Date(match.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      : '';
+
+    item.innerHTML = `
+      <div style="font-size: 13px; color: var(--color-text-primary); line-height: 1.4;">${text}</div>
+      <div style="font-size: 10px; color: var(--color-text-secondary); text-align: right; margin-top: 2px;">
+        ${dateStr}
+      </div>
+    `;
+    leaderboardList.appendChild(item);
   });
 }
 

@@ -1043,4 +1043,72 @@ canvas {
   }
 }
 
+/* Greenrich theme overrides for Start Match screen only */
+body.setup-active {
+  background-color: #0B1C15 !important;
+  background-image: none !important;
+}
+
+body.setup-active .setup-card {
+  background-color: #162E24 !important;
+  border-color: #1B3D2F !important;
+}
+
+body.setup-active .setup-card h1 {
+  color: var(--color-accent-gold) !important;
+}
+
+body.setup-active .setup-card p {
+  color: #FAF4E7 !important;
+}
+
+body.setup-active .setup-card p:last-of-type {
+  color: #8fa095 !important;
+}
+
+body.setup-active h2 {
+  color: var(--color-accent-gold) !important;
+}
+
+body.setup-active .name-input-group {
+  background-color: #0B1C15 !important;
+  border: 1.5px solid #1B3D2F !important;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+body.setup-active .input-field {
+  background-color: #162E24 !important;
+  border: 1.5px solid #1B3D2F !important;
+  color: #FAF4E7 !important;
+}
+
+body.setup-active .input-field::placeholder {
+  color: #5a7366 !important;
+}
+
+body.setup-active .input-field:focus {
+  border-color: var(--color-accent-gold) !important;
+}
+
+body.setup-active .btn-header {
+  border-color: #1B3D2F !important;
+}
+
+body.setup-active .btn-header span {
+  color: var(--color-accent-gold) !important;
+}
+
+body.setup-active #resume-section {
+  border-top: 1px dashed #1B3D2F;
+  padding-top: 12px;
+}
+
+body.setup-active #btn-resume {
+  background-color: transparent !important;
+  border-color: var(--color-accent-gold) !important;
+  color: var(--color-accent-gold) !important;
+}
+
+
 

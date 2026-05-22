@@ -58,6 +58,14 @@ class _GameScreenState extends State<GameScreen> {
   bool _isRolling = false;
   bool _hasSavedGame = false;
 
+  // Local match history states
+  final TextEditingController _filterNameController = TextEditingController();
+  List<Map<String, dynamic>> _matchHistory = [];
+  List<Map<String, dynamic>> _filteredHistory = [];
+  int _filterWins = 0;
+  int _filterLosses = 0;
+  int _filterDraws = 0;
+
   // Sizing and responsive tokens computed dynamically
   double _cellHeight = 34.0;
   double _diceArenaHeight = 125.0;
@@ -71,6 +79,10 @@ class _GameScreenState extends State<GameScreen> {
     // Initialize 2 text controllers for names
     _nameControllers.add(TextEditingController(text: 'Player 1'));
     _nameControllers.add(TextEditingController(text: 'Player 2'));
+
+    _filterNameController.addListener(() {
+      _applyMatchFilter();
+    });
 
     _game = YatzyGame(
       engine: _engine,
@@ -90,6 +102,7 @@ class _GameScreenState extends State<GameScreen> {
     for (var controller in _nameControllers) {
       controller.dispose();
     }
+    _filterNameController.dispose();
     super.dispose();
   }
 
@@ -102,9 +115,123 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _refreshLeaderboard() async {
-    final list = await _social.getLeaderboard();
+    await _loadMatchHistory();
+  }
+
+  Future<void> _loadMatchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final serialized = prefs.getString('yatzy_match_history');
+      if (serialized != null) {
+        final List<dynamic> list = jsonDecode(serialized);
+        setState(() {
+          _matchHistory = list.map((item) => Map<String, dynamic>.from(item)).toList();
+          _matchHistory.sort((a, b) => (b['timestamp'] as num).compareTo(a['timestamp'] as num));
+        });
+      } else {
+        setState(() {
+          _matchHistory = [];
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading match history: $e");
+      setState(() {
+        _matchHistory = [];
+      });
+    }
+    _applyMatchFilter();
+  }
+
+  Future<void> _saveMatchToHistory(String p1, String p2, int s1, int s2) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      String winner = '';
+      String defeatedOpponent = '';
+      int winnerScore = 0;
+      int margin = 0;
+      
+      if (s1 > s2) {
+        winner = p1;
+        defeatedOpponent = p2;
+        winnerScore = s1;
+        margin = s1 - s2;
+      } else if (s2 > s1) {
+        winner = p2;
+        defeatedOpponent = p1;
+        winnerScore = s2;
+        margin = s2 - s1;
+      } else {
+        winner = 'Draw';
+        winnerScore = s1;
+        margin = 0;
+      }
+
+      final newMatch = {
+        'player1': p1,
+        'player2': p2,
+        'score1': s1,
+        'score2': s2,
+        'winner': winner,
+        'winnerScore': winnerScore,
+        'defeatedOpponent': defeatedOpponent,
+        'margin': margin,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      final serialized = prefs.getString('yatzy_match_history');
+      List<dynamic> list = [];
+      if (serialized != null) {
+        list = jsonDecode(serialized);
+      }
+      list.add(newMatch);
+      await prefs.setString('yatzy_match_history', jsonEncode(list));
+      
+      await _loadMatchHistory();
+    } catch (e) {
+      debugPrint("Error saving match to history: $e");
+    }
+  }
+
+  void _applyMatchFilter() {
+    final query = _filterNameController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      setState(() {
+        _filteredHistory = List.from(_matchHistory);
+        _filterWins = 0;
+        _filterLosses = 0;
+        _filterDraws = 0;
+      });
+      return;
+    }
+
+    int wins = 0;
+    int losses = 0;
+    int draws = 0;
+
+    final filtered = _matchHistory.where((match) {
+      final p1 = (match['player1'] ?? '').toString().toLowerCase();
+      final p2 = (match['player2'] ?? '').toString().toLowerCase();
+      final winner = (match['winner'] ?? '').toString().toLowerCase();
+
+      final involvesPlayer = p1.contains(query) || p2.contains(query);
+      if (involvesPlayer) {
+        if (winner == 'draw') {
+          draws++;
+        } else if (winner.contains(query)) {
+          wins++;
+        } else {
+          losses++;
+        }
+      }
+      return involvesPlayer;
+    }).toList();
+
     setState(() {
-      _leaderboard = list;
+      _filteredHistory = filtered;
+      _filterWins = wins;
+      _filterLosses = losses;
+      _filterDraws = draws;
     });
   }
 
@@ -436,6 +563,13 @@ class _GameScreenState extends State<GameScreen> {
 
       if (_engine.isGameOver) {
         await _deleteSavedMatch();
+        if (_engine.playerCount >= 2) {
+          final p1 = _engine.playerNames[0];
+          final p2 = _engine.playerNames[1];
+          final s1 = _engine.getTotalScore(0);
+          final s2 = _engine.getTotalScore(1);
+          await _saveMatchToHistory(p1, p2, s1, s2);
+        }
         int maxScore = 0;
         for (int i = 0; i < _engine.playerCount; i++) {
           final total = _engine.getTotalScore(i);
@@ -714,6 +848,7 @@ class _GameScreenState extends State<GameScreen> {
     final bool showFullSubtitles = screenHeight >= 680;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0B1C15),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -722,9 +857,9 @@ class _GameScreenState extends State<GameScreen> {
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 400),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF323846),
+                  color: const Color(0xFF162E24),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFF1F2430), width: 1.5),
+                  border: Border.all(color: const Color(0xFF1B3D2F), width: 1.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.3),
@@ -796,7 +931,7 @@ class _GameScreenState extends State<GameScreen> {
                             margin: EdgeInsets.only(bottom: verticalSpacing),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF202430),
+                              color: const Color(0xFF0B1C15),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: const Color(0xFFFBBC05), width: 1.5),
                             ),
@@ -822,10 +957,10 @@ class _GameScreenState extends State<GameScreen> {
                                         showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            backgroundColor: const Color(0xFF323846),
+                                            backgroundColor: const Color(0xFF162E24),
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(16),
-                                              side: const BorderSide(color: Color(0xFF1F2430), width: 1.5),
+                                              side: const BorderSide(color: Color(0xFF1B3D2F), width: 1.5),
                                             ),
                                             title: const Text('Delete Saved Match?', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFBBC05))),
                                             content: const Text('Are you sure you want to delete the saved match progress?', style: TextStyle(color: Colors.white90)),
@@ -881,9 +1016,9 @@ class _GameScreenState extends State<GameScreen> {
                         Container(
                           padding: EdgeInsets.all(setupPadding * 0.7),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF202430),
+                            color: const Color(0xFF0B1C15),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFF1F2430)),
+                            border: Border.all(color: const Color(0xFF1B3D2F)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,10 +1039,10 @@ class _GameScreenState extends State<GameScreen> {
                                       labelStyle: TextStyle(color: const Color(0xFFA0A5B5), fontSize: screenHeight < 680 ? 10.0 : 12.0),
                                       contentPadding: screenHeight < 680 ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8) : null,
                                       filled: true,
-                                      fillColor: const Color(0xFF323846),
+                                      fillColor: const Color(0xFF162E24),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
-                                        borderSide: const BorderSide(color: Color(0xFF1F2430)),
+                                        borderSide: const BorderSide(color: Color(0xFF1B3D2F)),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
@@ -1575,30 +1710,99 @@ class _GameScreenState extends State<GameScreen> {
               color: const Color(0xFF323846),
               child: const Row(
                 children: [
-                  Icon(Icons.emoji_events, color: Color(0xFFFBBC05), size: 28),
+                  Icon(Icons.history, color: Color(0xFFFBBC05), size: 28),
                   SizedBox(width: 12),
                   Text(
-                    'LEADERBOARD',
+                    'MATCH HISTORY',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Color(0xFFFBBC05)),
                   ),
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: TextField(
+                controller: _filterNameController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Filter by player name...',
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFFFBBC05), size: 20),
+                  filled: true,
+                  fillColor: const Color(0xFF323846),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+                  suffixIcon: _filterNameController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                          onPressed: () {
+                            setState(() {
+                              _filterNameController.clear();
+                            });
+                          },
+                        )
+                      : null,
+                ),
+              ),
+            ),
+            if (_filterNameController.text.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF162E24),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF1B3D2F), width: 1),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatColumn('WINS', _filterWins, const Color(0xFF2196F3)),
+                      _buildStatColumn('LOSSES', _filterLosses, const Color(0xFFEF5350)),
+                      _buildStatColumn('DRAWS', _filterDraws, const Color(0xFFFBBC05)),
+                    ],
+                  ),
+                ),
+              ),
             Expanded(
-              child: _leaderboard.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFBBC05)))
+              child: _filteredHistory.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No matches found.',
+                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                    )
                   : ListView.builder(
-                      itemCount: _leaderboard.length,
+                      itemCount: _filteredHistory.length,
                       itemBuilder: (context, index) {
-                        final entry = _leaderboard[index];
-                        final int score = entry['score'] ?? 0;
-                        final String name = entry['name'] ?? 'Anonymous';
-                        final int rank = entry['rank'] ?? (index + 1);
+                        final match = _filteredHistory[index];
+                        final String winner = match['winner'] ?? 'Draw';
+                        final String player1 = match['player1'] ?? 'Player 1';
+                        final String player2 = match['player2'] ?? 'Player 2';
+                        final int score1 = match['score1'] ?? 0;
+                        final int score2 = match['score2'] ?? 0;
+                        final int winnerScore = match['winnerScore'] ?? 0;
+                        final int margin = match['margin'] ?? 0;
+                        final String defeatedOpponent = match['defeatedOpponent'] ?? '';
+                        final int timestamp = match['timestamp'] ?? 0;
 
-                        String rankSymbol = rank.toString();
-                        if (rank == 1) rankSymbol = '🥇';
-                        if (rank == 2) rankSymbol = '🥈';
-                        if (rank == 3) rankSymbol = '🥉';
+                        String matchText = '';
+                        if (winner == 'Draw') {
+                          matchText = 'Draw: $player1 & $player2 tied at $winnerScore pts';
+                        } else {
+                          matchText = '🏆 $winner won with $winnerScore pts, defeating $defeatedOpponent by $margin pts';
+                        }
+
+                        String dateStr = '';
+                        if (timestamp > 0) {
+                          final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);
+                          dateStr = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+                              '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                        }
 
                         return Container(
                           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1606,30 +1810,26 @@ class _GameScreenState extends State<GameScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFF323846),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: rank <= 3 ? const Color(0xFFFBBC05).withOpacity(0.3) : Colors.transparent,
-                            ),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              ui.SizedBox(
-                                width: 35,
-                                child: Text(
-                                  rankSymbol,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                              ),
                               Text(
-                                '$score pts',
-                                style: const TextStyle(color: Color(0xFFFBBC05), fontWeight: FontWeight.bold),
+                                matchText,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                dateStr,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                                textAlign: TextAlign.right,
                               ),
                             ],
                           ),
@@ -1640,6 +1840,23 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStatColumn(String label, int value, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value.toString(),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
     );
   }
 
